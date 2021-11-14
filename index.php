@@ -1,4 +1,6 @@
 <?php
+    $conn= mysqli_connect('', '', '', '');
+
     $pg = (int)$_GET['page'];
     $recom = $_GET['recom'];
     $month = $_GET['month'];
@@ -9,12 +11,35 @@
     $sk = "WHERE 1";
 
     # 월별
-    if (!($month == '' or $month == '0')) { $sk .= " AND MONTH(date)=".$month; }
+    # if (!($month == '' or $month == '0')) { $sk .= " AND MONTH(date)=".$month; }
+    if (!($month == '' or $month == '0'))
+    { $sk .= ' AND (date BETWEEN date("2021-0'.$month.'-01") AND date("2021-'.($month+1).'-01")-1)'; }
 
     # 념글
     if ($recom) { $sk .= " AND recommended=1"; }
 
     # 서치쿼리
+    if ($_GET['squery'] != '') {
+        $sk .= " AND ";
+        
+        if ($_GET['stype'] > 0 and $_GET['stype'] < 5) {
+
+            $sqr = mysqli_real_escape_string($conn, $_GET['squery']);
+            $sq2 = str_replace("%", "\\%", $sqr);
+
+            if ($_GET['stype'] == 1) {
+                $sk .= "(title LIKE '%".$sq2."%')";
+            } elseif ($_GET['stype'] == 2) {
+                $sk .= "(title LIKE '%".$sq2."%' OR postdata LIKE '%".$sq2."%')";
+            } elseif ($_GET['stype'] == 3) {
+                $sk .= "(nickname LIKE '%".$sq2."%')";
+            } elseif ($_GET['stype'] == 4) {
+                $sk .= "(ipid LIKE '%".$sq2."%')";
+            }
+        }
+    }
+
+    /*
     if ($_GET['squery'] != '') {
         $sk .= " AND ";
         
@@ -33,8 +58,9 @@
             }
         }
     }
+    */
 
-    $conn= mysqli_connect('', '', '', '');
+    
     $sql="SELECT postid, title, nickname, ipid, date_format(date,'%y.%m.%d %H:%i') as date2,
     views, upvotes, gonicupvotes, downvotes, comments, recommended, mobile, hasaccount
     FROM euca_gall_posts_2021 ".$sk." ORDER BY postid DESC LIMIT ".($postcount*($pg-1)).", ".$postcount;
@@ -69,8 +95,6 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js" crossorigin="anonymous"></script>
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- Core theme JS-->
-        <script src="js/scripts.js"></script>
     </head>
     <body>
         <!-- Responsive navbar-->
@@ -100,7 +124,7 @@
         <div class="container">
             <div class="mt-5 mx-4">
                 <h1>애유갤 박물관<small> #2021</small></h1>
-                <div class="lead mb-5">귀중한 애유갤의 역대 글 자료를 자유롭게 열람하세요</div>
+                <div class="lead mb-5">귀중한 2021년 애유갤의 역대 글 자료를 자유롭게 열람하세요</div>
             </div>
         </div>
 
@@ -315,8 +339,5 @@
         <p>트래픽 최소화를 위해 본문 콘텐츠는 링크되어 있으므로<br>PC 환경에서는 제대로 표시되지 않을 수 있습니다.</p></div>
         <p class="text-secondary text-center">by 1227</p>
     </body>
-
-    <script>
-        var loadMd = new bootstrap.Modal(document.getElementById('loadMd'));
-    </script>
+    <script src="js/scripts.js"></script>
 </html>
