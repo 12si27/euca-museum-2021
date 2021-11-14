@@ -1,6 +1,8 @@
 <?php
     $starttime = microtime(true);
 
+    $conn= mysqli_connect('', '', '', '');
+
     $pg = (int)$_GET['page'];
     $recom = $_GET['recom'];
     $month = $_GET['month'];
@@ -11,7 +13,8 @@
     $sk = "WHERE 1";
 
     # 월별
-    if (!($month == '' or $month == '0')) { $sk .= " AND MONTH(date)=".$month; }
+    if (!($month == '' or $month == '0'))
+    { $sk .= ' AND (date BETWEEN date("2021-0'.$month.'-01") AND date("2021-'.($month+1).'-01")-1)'; }
 
     # 념글
     if ($recom) { $sk .= " AND recommended=1"; }
@@ -22,21 +25,21 @@
         
         if ($_GET['stype'] > 0 and $_GET['stype'] < 5) {
 
-            $sqr = $_GET['squery'];
+            $sqr = mysqli_real_escape_string($conn, $_GET['squery']);
+            $sq2 = str_replace("%", "\\%", $sqr);
 
             if ($_GET['stype'] == 1) {
-                $sk .= "(INSTR(title, '".$sqr."'))";
+                $sk .= "(title LIKE '%".$sq2."%')";
             } elseif ($_GET['stype'] == 2) {
-                $sk .= "(INSTR(title, '".$sqr."') OR INSTR(postdata, '".$sqr."'))";
+                $sk .= "(title LIKE '%".$sq2."%' OR postdata LIKE '%".$sq2."%')";
             } elseif ($_GET['stype'] == 3) {
-                $sk .= "(INSTR(nickname, '".$sqr."'))";
+                $sk .= "(nickname LIKE '%".$sq2."%')";
             } elseif ($_GET['stype'] == 4) {
-                $sk .= "(INSTR(ipid, '".$sqr."'))";
+                $sk .= "(ipid LIKE '%".$sq2."%')";
             }
         }
     }
     
-    $conn= mysqli_connect('', '', '', '');
 
     $sql="SELECT postid, title, nickname, ipid, date_format(date,'%y.%m.%d %H:%i') as date,
     views, upvotes, gonicupvotes, downvotes, comments, recommended, mobile, hasaccount, postdata FROM euca_gall_posts_2021 WHERE postid=".$_GET['id'];
@@ -110,7 +113,7 @@
                 <div class="col-lg-6">
 
                     <div class="shadow-lg p-3 mt-3 mb-3 bg-white backpanel">
-                        <div class="form-group shadow rounded p-3 mb-2">
+                        <div class="form-group shadow rounded p-3 mb-2 bg-light">
                             <h3><?php if ($postdata['recommended']) {echo "<i class=\"fas fa-medal\"></i> "; }
                             if ($_GET['squery'] != '' and ($_GET['stype'] == 1 or $_GET['stype'] == 2))
                             { echo str_replace($_GET['squery'],"<mark>".$_GET['squery']."</mark>", $postdata['title']); }
@@ -260,7 +263,7 @@
                     <div class="form-check form-switch ms-1 mt-1">
                         <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" onclick="<?php 
 
-                            echo "window.location='./?recom=";
+                            echo "window.location='../?recom=";
                             if ($recom == 1) { echo "0"; } else { echo "1"; } 
                             if ($_GET['page'] != "") { echo "&page=".$_GET['page']; }
                             if ($_GET['squery']!='') { echo "&squery=".$_GET['squery']; }
@@ -277,7 +280,7 @@
                         if ($_GET['squery'] != "") { echo "<input hidden value=\"".$_GET['squery']."\""." name=\"squery\">"; }
                         if ($_GET['stype'] != "") { echo "<input hidden value=\"".$_GET['stype']."\""." name=\"stype\">"; }
                         if ($recom == 1) { echo "<input hidden value=\"".$_GET['recom']."\""." name=\"recom\">"; } ?>
-                    <select class="form-select form-select-sm" id="dateGroupSelect" aria-label="select" name="month" onchange="javascript:document.monthForm.submit();">
+                    <select class="form-select form-select-sm" id="dateGroupSelect" aria-label="select" name="month" onchange="javascript:document.monthForm.submit(); loadMd.show();">
                         <option <?php if ($month==0) { echo "selected"; } ?> value="0">전체</option>
                         <?php
                             for ($m=1; $m<=12; $m++) {
@@ -522,4 +525,5 @@
 
         </div>
     </body>
+    <script src="../js/scripts.js"></script>
 </html>
