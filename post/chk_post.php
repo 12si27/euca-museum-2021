@@ -7,7 +7,7 @@ if($postid != '' and is_numeric($postid)) {
     if (strpos($result, '<state>DELETED</state>') !== false) {
         
         // DB에서 삭제하기 시작
-        $conn=mysqli_connect('', '', '', '');
+        $conn = mysqli_connect('','','','');
 
         $sql="DELETE FROM `euca_gall_cmts_2021` WHERE `cmtpostid` = ".$postid.";";
         $del=mysqli_query($conn,$sql);

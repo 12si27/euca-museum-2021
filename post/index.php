@@ -1,20 +1,42 @@
 <?php
     $starttime = microtime(true);
+    $nolist = 1; #$_GET['nolist'];
 
-    $conn= mysqli_connect('', '', '', '');
+    $conn = mysqli_connect('','','','');
 
+    $cookie_name = 'user';
     $pg = (int)$_GET['page'];
     $recom = $_GET['recom'];
     $month = $_GET['month'];
+    $asc = $_GET['asc'];
+    $ascc = $_COOKIE['asc'];
+
+    $hidenick = $_GET['hidenick'];
+    if ($hidenick == 1) { require("../src/hasher.php"); }
+
+    $stype = $_GET['stype']; # 검색방식
+
+    if ($asc == null) { # get asc 값 없을때
+        if ($ascc == null) { # 쿠키값도 없을때
+            $asc = 0; setcookie('asc', 0, time()+3600*24*365, '/');
+        } else { $asc = $ascc; }
+    } else { setcookie('asc', $asc, time()+3600*24*365, '/'); }
 
     if ($pg == '' or $pg == 0) { $pg = 1; }
 
     $postcount = 15;
-    $sk = "WHERE 1";
+    $sk = "";
 
     # 월별
-    if (!($month == '' or $month == '0'))
-    { $sk .= ' AND (date BETWEEN date("2021-0'.$month.'-01") AND date("2021-'.($month+1).'-01")-1)'; }
+    # if (!($month == '' or $month == '0')) { $sk .= " AND MONTH(date)=".$month; }
+    if (!($month == '' or $month == '0')) { 
+        if ($stype > 4 and $stype < 8) {
+            $sk .= ' AND (c_date ';
+        } else {
+            $sk .= ' AND (date ';
+        }
+        $sk .= 'BETWEEN date("2021-0'.$month.'-01") AND date("2021-'.($month+1).'-01")-1)';
+    }
 
     # 념글
     if ($recom) { $sk .= " AND recommended=1"; }
@@ -23,19 +45,25 @@
     if ($_GET['squery'] != '') {
         $sk .= " AND ";
         
-        if ($_GET['stype'] > 0 and $_GET['stype'] < 5) {
+        if ($stype > 0 and $stype < 8) {
 
             $sqr = mysqli_real_escape_string($conn, $_GET['squery']);
             $sq2 = str_replace("%", "\\%", $sqr);
 
-            if ($_GET['stype'] == 1) {
+            if ($stype == 1) {
                 $sk .= "(title LIKE '%".$sq2."%')";
-            } elseif ($_GET['stype'] == 2) {
+            } elseif ($stype == 2) {
                 $sk .= "(title LIKE '%".$sq2."%' OR postdata LIKE '%".$sq2."%')";
-            } elseif ($_GET['stype'] == 3) {
+            } elseif ($stype == 3) {
                 $sk .= "(nickname LIKE '%".$sq2."%')";
-            } elseif ($_GET['stype'] == 4) {
+            } elseif ($stype == 4) {
                 $sk .= "(ipid LIKE '%".$sq2."%')";
+            } elseif ($stype == 5) { # 댓글-내용
+                $sk .= "(c_postdata LIKE '%".$sq2."%')";
+            } elseif ($stype == 6) { # 댓글-닉네임
+                $sk .= "(c_nickname LIKE '%".$sq2."%')";
+            } elseif ($stype == 7) { # 댓글-IPID
+                $sk .= "(c_ipid LIKE '%".$sq2."%')";
             }
         }
     }
@@ -46,7 +74,7 @@
     $result=mysqli_query($conn,$sql);
 
     if (mysqli_num_rows($result) < 1){
-        echo "<script>alert('존재하지 않는 게시글입니다.');</script>";
+        echo "<script>alert('존재하지 않는 게시글입니다.');history.back();</script>";
         exit();
     }
 
@@ -77,6 +105,7 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Core theme JS-->
         <script src="../js/scripts.js"></script>
+        <script type="application/javascript">setUserAgent(window, "Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Mobile Safari/537.36");</script>
 
     </head>
     <body>
@@ -95,7 +124,7 @@
                         <a class="nav-link active" aria-current="page" href="../">메인</a>
                         </li>
                         <li class="nav-item">
-                        <a class="nav-link" href="#">통계 (준비중)</a>
+                        <a class="nav-link" href="../stat">통계</a>
                         </li>
                         <li class="nav-item">
                         <a class="nav-link" href="#">정보 (준비중)</a>
@@ -120,18 +149,22 @@
                             else { echo $postdata['title']; } ?></h3>
                             <div class="d-flex bd-highlight">
                                 <div class="flex-fill bd-highlight">
-                                    <div><i class="far fa-clock"></i> <?php echo $postdata['date'] ?>
-                                    <span class="badge rounded-pill bg-secondary">댓글 <?php 
-                                    echo $postdata['comments'] ?></span>
-                                    <span class="badge rounded-pill bg-secondary">개추 <?php
-                                    echo $postdata['upvotes'] ?></span>
-                                    <span class="badge rounded-pill bg-secondary">비추 <?php
-                                    echo $postdata['downvotes'] ?></span></div>
+                                    <i class="far fa-clock"></i> <?=$postdata['date']?>
+                                    <span class="badge rounded-pill bg-secondary">댓글 <?=$postdata['comments']?></span>
+                                    <span class="badge rounded-pill bg-secondary">개추 <?=$postdata['upvotes']?></span>
+                                    <span class="badge rounded-pill bg-secondary">비추 <?=$postdata['downvotes']?></span>
                                 </div>
                                 <div class="flex bd-highlight justify-content-end">
-                                    <div><?php echo $postdata['nickname'] ?>
-                                    <span class="badge rounded-pill bg-secondary"><?php
-                                    echo $postdata['ipid'] ?></span></div>
+                                    <?php
+                                        if ($hidenick) {
+                                            $annick = explode(' #', eucahash($postdata['ipid']));
+                                            ?><div><?=$annick[0]?>
+                                            <span class="badge rounded-pill bg-secondary"><?="#".$annick[1]?></span></div><?php
+                                        } else {
+                                            ?><div><?=$postdata['nickname']?>
+                                            <span class="badge rounded-pill bg-secondary"><?=$postdata['ipid']?></span></div><?php
+                                        }
+                                    ?>
                                 </div>
                             </div>
                         </div>
@@ -147,14 +180,34 @@
                             </div>
 
                             <div class="d-flex justify-content-center pt-2">
-                                <button type="button" class="btn btn-primary btn-lg">개추 <?php echo "<b>".$postdata['upvotes']."</b> (".$postdata['gonicupvotes'].")" ?></button>
-                                <button type="button" class="btn btn-secondary btn-lg ms-2">비추 <b><?php echo $postdata['downvotes'] ?></b></button>
+                                <button type="button" class="btn btn-primary btn-lg">개추 <b><?=$postdata['upvotes']?></b> (<?=$postdata['gonicupvotes']?>)</button>
+                                <button type="button" class="btn btn-secondary btn-lg ms-2">비추 <b><?=$postdata['downvotes']?></b></button>
                             </div>
                             <div class="d-flex justify-content-center pt-2 pb-4">
-                                <a type="button" class="btn btn-outline-primary btn-sm" href="https://gall.dcinside.com/euca/<?php echo $postdata['postid']; ?>" target="_blank"> 원본 글 링크</a>
+                                <a type="button" class="btn btn-outline-primary btn-sm" href="https://gall.dcinside.com/euca/<?=$postdata['postid']?>" target="_blank"> 원본 글 링크</a>
                                 <a type="button" class="btn btn-outline-danger btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#delcfMd" target="_blank"> 삭제 요청</a>
                             </div>
 
+                        </div>
+                    </div>
+
+                    <div class="shadow rounded-pill my-3 postzoom" onclick=<?php
+                    echo "\"location.href='../?previd=".$_GET['id']."&page=".$pg;
+                    if ($_GET['cmtid']!='') { echo "&pcmtid=".$_GET['cmtid']; }
+                    if ($_GET['squery']!='') { echo "&squery=".$_GET['squery']; }
+                    if ($stype!='') { echo "&stype=".$stype; }
+                    if ($recom==1) { echo "&recom=1"; }
+                    if ($month!='') { echo "&month=".$month; }
+                    if ($hidenick==1) { echo "&hidenick=1"; }
+                    echo "#".$_GET['id'];
+
+                    ?>'" style="position: relative; z-index: 1;">
+                        <div class="p-3">
+                            <div class="d-flex bd-highlight align-items-center">
+                                <div class="flex-fill bd-highlight text-center">
+                                    <div class="fs-5"><i class="fas fa-list"></i>&nbsp;목록으로</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -162,7 +215,7 @@
 
                 <!-- 댓글 영역 -->
                 <div class="col-lg-6">
-                    <div class="shadow-lg p-3 mt-3 mb-3 bg-white backpanel">
+                    <div class="shadow-lg p-3 mt-3 mb-1 bg-white backpanel">
                         <div class="form-group shadow rounded p-3 mb-2">
                             <span style="font-size: x-large;">댓글  </span><span>총 <?php echo $commentcnt ?>개</span>
                         </div>
@@ -170,19 +223,35 @@
                         <div class="flex">
                         <?php
 
-                            function print_cmt($data, $pd, $isreply) {
+                            function print_cmt($data, $pd, $isreply, $hidenick) {
                                 echo "<div class=\"shadow rounded my-3 ";
                                 if ($isreply) {echo "ms-3";}
                                 echo "\" ";
-                                if ($pd == $data['c_ipid']) { echo "style='background-color:#E2ECF7;'"; }
+                                if ($data['cmtid'] == $_GET['cmtid']) { # 선택한 댓글 강조표시
+                                    echo "style='background-color:#FAEFCA;' id='targetpost'";
+                                } elseif ($pd == $data['c_ipid']) { echo "style='background-color:#E2ECF7;'"; }
                                 echo ">
                                     <div class=\"p-3\">
                                         <div class=\"d-flex bd-highlight\">
                                             <div class=\"flex-fill bd-highlight\">
                                                 <div>";
-                                echo $data['c_nickname'];
+                                
+                                if ($hidenick) { $annick = explode(' #', eucahash($data['c_ipid'])); }
+
+                                if ($hidenick) {
+                                    echo $annick[0];
+                                } else {
+                                    echo $data['c_nickname'];
+                                }
+                                
                                 echo " <span class=\"badge rounded-pill bg-secondary\">";
-                                echo $data['c_ipid'];
+
+                                if ($hidenick) {
+                                    echo "#".$annick[1];
+                                } else {
+                                    echo $data['c_ipid'];
+                                }
+
                                 echo "</span></div>
                                             </div>
                                             <div class=\"flex bd-highlight justify-content-end\">
@@ -213,12 +282,12 @@
                             for ($i=0; $i<count($comm); $i++) {
 
                                 // 일반 댓글 출력
-                                print_cmt($comm[$i], $postdata['ipid'], 0);
+                                print_cmt($comm[$i], $postdata['ipid'], 0, $hidenick);
                                 
                                 for ($j=0; $j<count($rply); $j++) {
 
                                     if ($rply[$j]['refcid'] == $comm[$i]['cmtid']) {
-                                        print_cmt($rply[$j], $postdata['ipid'], 1);
+                                        print_cmt($rply[$j], $postdata['ipid'], 1, $hidenick);
                                         //array_splice($rply, $j, 1);
                                     }
 
@@ -231,229 +300,43 @@
 
                         ?>
                         </div>
-                    </div>   
-                </div>
-            </div>
-        </div>
-        <?php
-        
-        $postloadtime = microtime(true) - $starttime;
-        
-        // 목록 비활성화 옵션 활성화일 경우 -> 여기서 끝
-        if ($nolist) {
-            ?><div class="text-end text-secondary text-center" style="font-size: x-small; font-color:gray;">
-            <p>저장 DB: 2021.01.01~2021.10.31*</br><?php
-            echo "글 로드 시간:".round($postloadtime, 4)."</p>";
-            echo "<p>* 트래픽 최소화를 위해 본문 이미지는 링크되어 있으므로<br>PC 환경에서는 사진이 표시되지 않을 수 있습니다.</p></div></body></html>";
-            exit();
-        }
-
-        $starttime = microtime(true);
-
-        ?>
-
-
-        <!-- 글 목록 시작 -->
-
-        <div class="container shadow-lg p-3 mt-2 mb-5 bg-white backpanel">
-
-            <div class="d-flex">
-
-                <form class="flex-fill bd-highlight align-items-center">
-                    <div class="form-check form-switch ms-1 mt-1">
-                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" onclick="<?php 
-
-                            echo "window.location='../?recom=";
-                            if ($recom == 1) { echo "0"; } else { echo "1"; } 
-                            if ($_GET['page'] != "") { echo "&page=".$_GET['page']; }
-                            if ($_GET['squery']!='') { echo "&squery=".$_GET['squery']; }
-                            if ($_GET['stype']!='') { echo "&stype=".$_GET['stype']; }
-                            if ($month!='') { echo "&month=".$month; }
-                            
-                        ?>';" <?php if ($recom == 1) { echo " checked"; } ?> >
-                        <label class="form-check-label" for="flexSwitchCheckDefault">개념글만 보기</label>
                     </div>
-                </form>
-                <form class="flex bd-highlight justify-content-end align-items-center text-end" name="monthForm" action="../">
-                    <?php
-                        # if ($_GET['page'] != "") { echo "<input hidden value=\"".$_GET['page']."\""." name=\"page\">"; }
-                        if ($_GET['squery'] != "") { echo "<input hidden value=\"".$_GET['squery']."\""." name=\"squery\">"; }
-                        if ($_GET['stype'] != "") { echo "<input hidden value=\"".$_GET['stype']."\""." name=\"stype\">"; }
-                        if ($recom == 1) { echo "<input hidden value=\"".$_GET['recom']."\""." name=\"recom\">"; } ?>
-                    <select class="form-select form-select-sm" id="dateGroupSelect" aria-label="select" name="month" onchange="javascript:document.monthForm.submit(); loadMd.show();">
-                        <option <?php if ($month==0) { echo "selected"; } ?> value="0">전체</option>
-                        <?php
-                            for ($m=1; $m<=12; $m++) {
-                                echo "<option ";
-                                if ($month == $m) { echo "selected "; }
-                                echo "value=\"".$m."\">2021-".$m."</option>\n";
-                            }
-                        ?>
-                    </select>
-                </form>
-                                
-            </div>
-        
-                <?php
 
-                    $sql="SELECT postid, title, nickname, ipid, date_format(date,'%y.%m.%d %H:%i') as date2,
-                    views, upvotes, gonicupvotes, downvotes, comments, recommended, mobile, hasaccount
-                    FROM euca_gall_posts_2021 ".$sk." ORDER BY postid DESC LIMIT ".($postcount*($pg-1)).", ".$postcount;
+                    <?php if (count($comm) > 5) { // 댓글이 5개를 넘을때만 버튼 출력 ?>
 
-                    $result = mysqli_query($conn,$sql);
-
-                    $cnt = mysqli_fetch_array(mysqli_query($conn, "SELECT COUNT(*) as cnt FROM euca_gall_posts_2021 ".$sk));
-                    $totalposts = $cnt['cnt'];
-
-
-                    $totalpages = (int)($totalposts/$postcount);
-    
-                    if (($totalposts%$postcount)>1) {
-                        $totalpages++;
-                    }
-
-                    
-                    while($board = mysqli_fetch_array($result)){
-                
-                        echo "<div class=\"shadow my-3 postzoom\" data-bs-toggle=\"modal\" data-bs-target=\"#loadMd\" onclick=\"location.href='?id=";
-                        echo $board['postid']."&page=".$pg;
+                        <div class="shadow rounded-pill my-3 postzoom" onclick=<?php
+                        echo "\"location.href='../?previd=".$_GET['id']."&page=".$pg;
+                        if ($_GET['cmtid']!='') { echo "&pcmtid=".$_GET['cmtid']; }
                         if ($_GET['squery']!='') { echo "&squery=".$_GET['squery']; }
-                        if ($_GET['stype']!='') { echo "&stype=".$_GET['stype']; }
+                        if ($stype!='') { echo "&stype=".$stype; }
                         if ($recom==1) { echo "&recom=1"; }
                         if ($month!='') { echo "&month=".$month; }
-                        echo "';\" ";
-                        if ($board['postid'] == $_GET['id']) {
-                            echo "style='background-color:#E2ECF7;'";
-                        }
-                        echo ">";
-                        echo "    <div class=\"p-3\">";
-                        echo "        <div class=\"d-flex bd-highlight align-items-center\">";
-                        echo "            <div class=\"flex-fill bd-highlight\">";
-                        echo "                <div>";
-                        if ($board['recommended']) {echo "<i class=\"fas fa-medal\"></i> "; }
-                        if ($_GET['squery'] != '' and ($_GET['stype'] == 1 or $_GET['stype'] == 2))
-                        { echo str_replace($_GET['squery'],"<mark>".$_GET['squery']."</mark>",$board['title']); }
-                        else { echo $board['title']; }
-                        echo "</div>";
-                        echo "                <span class=\"badge rounded-pill bg-secondary\">".$board['comments']."</span>";
-                        echo "                <span class=\"badge rounded-pill bg-primary\">".$board['upvotes']."</span>";
-                        echo "                <span class=\"badge rounded-pill bg-danger\">".$board['downvotes']."</span>";
-                        echo "            </div>";
-                        echo "            <div class=\"flex bd-highlight justify-content-end align-items-center text-end fs-6\">";
-                        if ($_GET['squery'] != '' and $_GET['stype'] == 3) { echo str_replace($_GET['squery'],"<mark>".$_GET['squery']."</mark>",$board['nickname']); }
-                        else { echo $board['nickname']; }
-                        if ($board['hasaccount']) {
-                        echo "<img src=\"../assets/gonic.gif\" width=14px height=14px>";} else { echo "(".$board['ipid'].")"; }
-                        echo "                <div><i class=\"far fa-clock\"></i> ".$board['date2']."</div>";
-                        echo "            </div>";
-                        echo "        </div>";
-                        echo "    </div>";
-                        echo "</div>";
-                    }
+                        if ($hidenick==1) { echo "&hidenick=1"; }
+                        echo "#".$_GET['id'];
 
-                ?>
-
-
-                <!-- 페이지 버튼 영역 -->
-                
-                <div class="d-flex justify-content-center">
-                    <nav aria-label="Page navigation example">
-                        <ul class="pagination">
-                            <li class="page-item">
-                            <a class="page-link" href="../?page=1<?php
-                            if ($_GET['squery']!='') { echo "&squery=".$_GET['squery']; }
-                            if ($_GET['stype']!='') { echo "&stype=".$_GET['stype']; }
-                            if ($recom==1) { echo "&recom=1"; }
-                            ?>" aria-label="First">
-                                <span aria-hidden="true">&laquo;</span>
-                                <span class="sr-only">처음</span>
-                            </a>
-                            </li>
-
-                            <?php
-                                
-                                $i = 0;
-                                $pg = (int)$pg;
-
-                                if ($pg < 4) {
-                                    while($i < 5) {
-                                        if (!(($i + 1) > $totalpages) or $i==0) {
-                                            echo "<li class=\"page-item";
-                                            if (($i + 1) == $pg) { echo " active"; }
-                                            echo "\"><a class=\"page-link";
-                                            echo "\" href=\"../?page=".($i + 1);
-                                            if ($_GET['squery']!='') { echo "&squery=".$_GET['squery']; }
-                                            if ($_GET['stype']!='') { echo "&stype=".$_GET['stype']; }
-                                            if ($recom==1) { echo "&recom=1"; }
-                                            if ($month!='') { echo "&month=".$month; }
-                                            echo "\">";
-                                            echo ($i + 1);
-                                            echo "</a></li>";
-                                        }
-                                        $i++;
-                                    }
-
-                                } else {
-                                    while($i < 5) {
-                                        if (!(($pg + $i - 2) > $totalpages) or $i==0) {
-                                            echo "<li class=\"page-item";
-                                            if (($pg + $i - 2) == $pg) { echo " active"; }
-                                            echo "\"><a class=\"page-link";
-                                            echo "\" href=\"../?page=".($pg + $i - 2);
-                                            if ($_GET['squery']!='') { echo "&squery=".$_GET['squery']; }
-                                            if ($_GET['stype']!='') { echo "&stype=".$_GET['stype']; }
-                                            if ($recom==1) { echo "&recom=1"; }
-                                            if ($month!='') { echo "&month=".$month; }
-                                            echo "\">";
-                                            echo ($pg + $i - 2);
-                                            echo "</a></li>";
-                                        }
-
-                                        $i++;
-                                    }
-                                }
-
-                            ?>
-                            <li class="page-item">
-                            <a class="page-link" href="<?php echo "../?page=".$totalpages;
-                                if ($_GET['squery']!='') { echo "&squery=".$_GET['squery']; }
-                                if ($_GET['stype']!='') { echo "&stype=".$_GET['stype']; }
-                                if ($recom==1) { echo "&recom=1"; }
-                                if ($month!='') { echo "&month=".$month; }?>" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                                <span class="sr-only">끝</span>
-                            </a>
-                            </li>
-                        </ul>
-                    </nav>
-
-                </div>
-
-                <form action='../' method='get'>
-                    <div class="d-flex justify-content-center">
-                        
-                            <div class="col-lg-1">
-                                <select class="form-select" id="inputGroupSelect03" aria-label="Example select with button addon" name="stype" required>
-                                    <option <?php if ($_GET['stype']==1) { echo "selected"; } ?> value="1">제목</option>
-                                    <option <?php if ($_GET['stype']==2) { echo "selected"; } ?> value="2">제목+내용</option>
-                                    <option <?php if ($_GET['stype']==3) { echo "selected"; } ?> value="3">닉네임</option>
-                                    <option <?php if ($_GET['stype']==4) { echo "selected"; } ?> value="4">ID,IP</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-3">
-                                <?php if ($recom == 1) { echo "<input hidden value=\"".$_GET['recom']."\""." name=\"recom\">"; }
-                                if (!($month == '' or $month == 0)) { echo "<input hidden value=\"".$month."\""." name=\"month\">"; } ?>
-                                <div class="input-group mb-3">
-                                    <input type="text" class="form-control" name="squery" placeholder="검색어 입력" aria-label="검색어 입력" aria-describedby="button-addon2" value="<?php echo $_GET['squery']; ?>">
-                                    <input class="btn btn-outline-secondary" type="submit" id="button-addon2" data-bs-toggle="modal" data-bs-target="#loadMd" value="검색">
+                        ?>'" style="position: relative; z-index: 1;">
+                            <div class="p-3">
+                                <div class="d-flex bd-highlight align-items-center">
+                                    <div class="flex-fill bd-highlight text-center">
+                                        <div class="fs-5"><i class="fas fa-list"></i>&nbsp;목록으로</div>
+                                    </div>
                                 </div>
                             </div>
-                    </div>
-                </form>
-
+                        </div>
+                    <?php } ?>
+                    
+                    
+                </div>
             </div>
 
-            <!-- 로딩 Modal -->
+
+            
+        </div>
+
+            
+
+
+                <!-- 로딩 Modal -->
             <div class="modal fade" id="loadMd" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="loadMeLabel">
                 <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
                     <div class="modal-content">
@@ -492,7 +375,7 @@
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <form action='./chk_post.php' method='post'>
-                        <input type="hidden" id="postid" name="postid" value="<?php echo $postdata['postid'] ?>">
+                        <input type="hidden" id="postid" name="postid" value="<?=$postdata['postid']?>">
                         <div class="modal-header">
                             <h5 class="modal-title" id="confirmModalLabel">삭제 요청</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -512,18 +395,21 @@
             </div>
         </div>
 
-            <div class="text-end text-secondary text-center" style="font-size: x-small; font-color:gray;">
-            <p>저장 DB: 2021.01.01~2021.10.31</br>
-
-            <?php $endtime = microtime(true);
-            echo "글 로드 시간:".round($postloadtime, 4)."</br>";
-            echo "목록 로드 시간:".round($endtime - $starttime, 4)."</p>";
-            ?>
             
-            <p>트래픽 최소화를 위해 본문 콘텐츠는 링크되어 있으므로<br>PC 환경에서는 제대로 표시되지 않을 수 있습니다.</p></div>
+            <?php
+            $postloadtime = microtime(true) - $starttime;?>
+            
+        <div class="text-end text-secondary text-center mt-3" style="font-size: x-small;">
+            <p>저장 DB: 2021.01.01~2021.10.31*</br>
+            
+            <?php
+                echo "글 로드 시간:".round($postloadtime, 4)."</p>";
+                echo "<p>* 트래픽 최소화를 위해 본문 이미지는 링크되어 있으므로<br>PC 환경에서는 사진이 표시되지 않을 수 있습니다.</p></div></body></html>";
+            ?>
             <p class="text-secondary text-center">by 1227</p>
 
         </div>
     </body>
-    <script src="../js/scripts.js"></script>
+    <script src="../js/scripts.js?rev=0.4"></script>
+    <?php # if ($_GET['cmtid'] != '') { echo "<script>document.getElementById('targetpost').scrollIntoView();</script>"; } ?>
 </html>
