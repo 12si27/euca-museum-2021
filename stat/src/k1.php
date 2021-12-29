@@ -2,7 +2,7 @@
 
 $input = $_GET['input'];
 $valid = ($input != '');
-$conn = mysqli_connect('','','','');
+$conn = mysqli_connect('', '', '', '');
 
 if ($valid) {
 
@@ -53,6 +53,16 @@ if ($valid) {
     while ($result = mysqli_fetch_array($results)) {
         array_push($keyname, $result['kw']);
         array_push($keyvalue, $result['count']);
+    }
+
+    if (count($keyname) == 1 and $keyvalue[0] == 0) {
+        ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>결과 없음</strong></br>DB에 일치하는 결과가 없습니다. 올바른 키워드인지 확인하세요.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php
+        $valid = false;
     }
 }
 
@@ -128,11 +138,12 @@ if ($valid) {
 ?>
 
 <div class="card">
-  <div class="card-body">
-  <h6 class="card-subtitle mb-2 text-muted">참고사항</h6>
-  <div style="font-size:small; color: gray;">본 결과는 제목을 기준으로 집계합니다</br>
-  문맥과는 맞지 않는 언급도 포함되기 때문에 뜻이 많이 겹치는 단어의 경우 실제보다 더 많이 집계될 수 있습니다.</div>
-  </div>
+    <div class="card-body">
+    <h6 class="card-subtitle mb-2 text-muted">참고사항</h6>
+    <div style="font-size:small; color: gray;">
+    본 결과는 제목을 기준으로 집계합니다.</br>
+    문맥과는 맞지 않는 언급도 포함되기 때문에 뜻이 많이 겹치는 단어의 경우 실제보다 더 많이 집계될 수 있습니다.</div>
+    </div>
 </div>
 
 

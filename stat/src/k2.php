@@ -2,7 +2,7 @@
 
 $input = $_GET['input'];
 $valid = ($input != '');
-$conn = mysqli_connect('','','','');
+$conn = mysqli_connect('', '', '', '');
 
 if ($valid) {
 
@@ -20,6 +20,16 @@ if ($valid) {
 
         array_push($keyname, $result['m']);
         array_push($keyvalue, $result['count']);
+    }
+
+    if (count($keyname) == 0) {
+        ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>결과 없음</strong></br>DB에 일치하는 결과가 없습니다. 올바른 키워드인지 확인하세요.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php
+        $valid = false;
     }
 }
 
@@ -91,12 +101,14 @@ if ($valid) {
 ?>
 
 <div class="card">
-  <div class="card-body">
-  <h6 class="card-subtitle mb-2 text-muted">참고사항</h6>
-  <div style="font-size:small; color: gray;">본 결과는 제목과 글 내용을 기준으로 집계합니다</br>
-  글에서 해당 키워드가 여러번 언급되더라도 글당 1회로 집계합니다</br>
-  문맥과는 맞지 않는 언급도 포함되기 때문에 뜻이 많이 겹치는 단어의 경우 실제보다 더 많이 집계될 수 있습니다.</div>
-  </div>
+    <div class="card-body">
+    <h6 class="card-subtitle mb-2 text-muted">참고사항</h6>
+    <div style="font-size:small; color: gray;">
+    본 결과는 제목과 글 내용을 기준으로 집계합니다.</br>
+    글에서 해당 키워드가 여러번 언급되더라도 글당 1회로 집계합니다.</br>
+    문맥과는 맞지 않는 언급도 포함되기 때문에 뜻이 많이 겹치는 단어의 경우 실제보다 더 많이 집계될 수 있습니다.<br>
+    공앱으로 첨부한 꼬릿말에도 키워드가 있을 경우 집계에 포함됩니다.</div>
+    </div>
 </div>
 
 <?php

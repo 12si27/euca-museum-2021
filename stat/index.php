@@ -1,4 +1,5 @@
 <?php
+    $mode = 'stat';
     $type = $_GET['stype'];
 
     //if ($type == '') $type = 'k1';
@@ -13,42 +14,22 @@
         <meta name="author" content="" />
         <title>애유갤 박물관 2021 v0.2</title>
         <!-- Favicon-->
-        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+        <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
         <!-- Core theme CSS (includes Bootstrap)-->
-        <link href="../css/styles.css" rel="stylesheet" />
+        <link href="../css/styles.css?rev=0.1" rel="stylesheet" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js" crossorigin="anonymous"></script>
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     </head>
     <body>
         <!-- Responsive navbar-->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container">
-                <a class="navbar-brand" href="../"><i class="fas fa-landmark"></i> 애유갤 박물관 <small>2021</small> <span style="font-size: x-small;">v0.2 beta</span></a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll" aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-                </button>
-                    <div class="collapse navbar-collapse" id="navbarScroll">
-                        <ul class="navbar-nav me-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 150px;">
-                        <li class="nav-item">
-                        <a class="nav-link" href="../">메인</a>
-                        </li>
-                        <li class="nav-item">
-                        <a class="nav-link active" aria-current="./" href="./">통계</a>
-                        </li>
-                        <li class="nav-item">
-                        <a class="nav-link" href="#">정보 (준비중)</a>
-                        </li>
-                        </ul>
-                </div>
-            </div>
-        </nav>
+        <?php require('../src/nav.php') ?>
 
         <!-- Page content-->
         <div class="container">
             <div class="mt-5 mx-4">
                 <h1>통계<small> #2021</small></h1>
-                <div class="lead mb-5">지난 2021년 애유갤의 데이터를 분석하여 되돌아보세요</div>
+                <div class="lead mb-5">지난 2021년 애유갤의 데이터를 분석하여 통계로 되돌아보세요</div>
             </div>
         </div>
 
@@ -59,13 +40,16 @@
                         <div class="fs-5 text-secondary mb-2">키워드 분석</div>
                         <ul class="nav nav-pills">
                             <li class="nav-item">
-                                <a class="nav-link <?=($type=='k1'?'active':'')?>" href="./?stype=k1">언급 비율</a>
+                                <a class="nav-link <?=($type=='k1'?'active':'')?>" href="./?stype=k1" >언급 비율</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?=($type=='k2'?'active':'')?>" href="./?stype=k2">월별 언급 빈도</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?=($type=='k3'?'active':'')?>" href="./?stype=k3">최다 언급 회원</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?=($type=='k4'?'active':'')?>" href="./?stype=k4">워드클라우드</a>
                             </li>
                         </ul>
                     </div>
@@ -74,16 +58,22 @@
                         <div class="fs-5 text-secondary mb-2">갤러 분석</div>
                         <ul class="nav nav-pills">
                             <li class="nav-item">
-                                <a class="nav-link <?=($type=='g1'?'active':'')?>" href="./?stype=g1">월별 활동</a>
+                                <a class="nav-link <?=($type=='g1'?'active':'')?>" href="./?stype=g1">요약</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link <?=($type=='g2'?'active':'')?>" href="./?stype=g2">디시콘 랭킹</a>
+                                <a class="nav-link <?=($type=='g2'?'active':'')?>" href="./?stype=g2" onclick="loadMd.show();">월별 활동</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link <?=($type=='g3'?'active':'')?>" href="./?stype=g3">개추/비추 랭킹</a>
+                                <a class="nav-link <?=($type=='g3'?'active':'')?>" href="./?stype=g3" onclick="loadMd.show();">디시콘 랭킹</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link <?=($type=='g4'?'active':'')?>" href="./?stype=g4">갤럼간 댓글 랭킹</a>
+                                <a class="nav-link <?=($type=='g4'?'active':'')?>" href="./?stype=g4">개추/비추 랭킹</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?=($type=='g5'?'active':'')?>" href="./?stype=g5">갤럼간 댓글 랭킹</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?=($type=='g6'?'active':'')?>" href="./?stype=g6">워드클라우드</a>
                             </li>
                         </ul>
                     </div>
@@ -103,6 +93,10 @@
                         case 'k3':
                             require("./src/k3.php");
                             break;
+                        
+                        case 'k4':
+                            require("./src/k4.php");
+                            break;
 
                         case 'g1':
                             require("./src/g1.php");
@@ -118,6 +112,14 @@
 
                         case 'g4':
                             require("./src/g4.php");
+                            break;
+
+                        case 'g5':
+                            require("./src/g5.php");
+                            break;
+
+                        case 'g6':
+                            require("./src/g6.php");
                             break;
                         default:
                         ?>

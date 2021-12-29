@@ -79,6 +79,7 @@
 }
 
 .postzoom {
+  cursor: pointer;
   transition: transform .2s;
   background-color: #FFFFFF;
   border-radius: 10px !important;

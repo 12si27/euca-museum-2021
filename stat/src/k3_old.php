@@ -5,89 +5,79 @@ $cmt = $_GET['cmt'];
 $valid = ($input != '');
 $conn = mysqli_connect('', '', '', '');
 
+
+
 if ($valid) {
 
     $sqlq = '';
 
-    $postname = array();
-    $postname2 = array();
-    $postvalue = array();
+    $keyname = array();
+    $keyname2 = array();
+    $keyvalue = array();
 
-    $cmtname = array();
-    $cmtname2 = array();
-    $cmtvalue = array();
-
-    $resultname = array();
-    $resultname2 = array();
-    $resultvalue = array();
 
     $key = mysqli_real_escape_string($conn, trim($input));
     
 
-    # 글 작성 상위 100 목록을 불러오기
-
-    $sqlq = "SELECT
-                nickname as n,
-                ipid as i,
-                COUNT(*) AS c
-            FROM
-                euca_gall_posts_2021
-            WHERE
-                title LIKE '%".$key."%'
-            GROUP BY
-                ipid,
-                nickname
-            ORDER BY
-                c
-            DESC
-            LIMIT 20";
-    
-    $results = mysqli_query($conn, $sqlq);
-
-    while ($result = mysqli_fetch_array($results)) {
-        array_push($resultname, $result['n']);
-        array_push($resultname2, $result['i']);
-        array_push($resultvalue, $result['c']);
-    }
-
     if ($cmt == '1') {
 
-        # 댓글 작성 상위 100 목록을 불러오기
-
         $sqlq = "SELECT
-                    c_nickname as n,
-                    c_ipid as i,
-                    COUNT(*) AS c
+                b.c_ipid as i,
+                b.c_nickname as n,
+                c1 + c2 as c
+            FROM
+                (
+                SELECT
+                    ipid, nickname, COUNT(*) AS c1
+                FROM
+                    euca_gall_posts_2021
+                WHERE
+                    title LIKE '%".$key."%'
+                GROUP BY
+                    ipid
+            ) a
+            RIGHT OUTER JOIN
+                (
+                SELECT
+                    c_ipid, c_nickname, COUNT(*) AS c2
                 FROM
                     euca_gall_cmts_2021
                 WHERE
                     c_postdata LIKE '%".$key."%'
                 GROUP BY
-                    c_ipid,
-                    c_nickname
+                    c_ipid
+            ) b ON a.ipid = b.c_ipid
+            ORDER BY c DESC
+            LIMIT 15";
+    } else {
+
+        $sqlq = "SELECT
+                    nickname as n,
+                    ipid as i,
+                    COUNT(*) AS c
+                FROM
+                    euca_gall_posts_2021
+                WHERE
+                    title LIKE '%".$key."%'
+                GROUP BY
+                    ipid,
+                    nickname
                 ORDER BY
                     c
                 DESC
-                LIMIT 20";
+                LIMIT 15";
         
-        $results = mysqli_query($conn, $sqlq);
+    }
+    
+    $results = mysqli_query($conn, $sqlq);
 
-        while ($result = mysqli_fetch_array($results)) {
-
-            if (array_search($result['i'], $resultname2) === false) {
-                array_push($resultname, $result['n']);
-                array_push($resultname2, $result['i']);
-                array_push($resultvalue, $result['c']);
-            } else {
-                $resultvalue[array_search($result['i'], $resultname2)] += $result['c'];
-            }
-        }
-
-        array_multisort($resultvalue, SORT_DESC, $resultname, $resultname2);
-
+    while ($result = mysqli_fetch_array($results)) {
+        array_push($keyname, $result['n']);
+        array_push($keyname2, $result['i']);
+        array_push($keyvalue, $result['c']);
     }
 
-    if (count($resultname) == 0) {
+    if (count($keyname) == 0) {
         ?>
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <strong>결과 없음</strong></br>DB에 일치하는 결과가 없습니다. 올바른 키워드인지 확인하세요.
@@ -96,11 +86,6 @@ if ($valid) {
         <?php
         $valid = false;
     }
-
-    array_slice($resultname, 0, 15);
-    array_slice($resultname2, 0, 15);
-    array_slice($resultvalue, 0, 15);
-
 }
 
 ?>
@@ -110,12 +95,12 @@ if ($valid) {
         <div class="input-group" style="max-width: 600px">
             <input type="text" class="form-control" placeholder="분석할 키워드를 입력하세요 (하나만)" aria-label="id" name="input" aria-describedby="idinput"  value="<?=$_GET['input']?>">
             <input hidden name="stype" value="k3">
-            <input class="btn btn-primary" type="submit" id="button-submit" onclick="loadMd.show();" value="입력">
+            <input class="btn btn-primary" type="submit" id="button-submit" onclick="if (document.getElementById('flexCheck').checked == true) {loadMd2.show();} else {loadMd.show();}" value="입력">
         </div>
     </div>
     <div class="d-flex justify-content-center my-3">
         <div class="form-check" style="max-width: 600px">
-            <input class="form-check-input" type="checkbox" name="cmt" value="1" id="flexCheck" <?=($cmt=='1'?'checked':'')?>>
+            <input class="form-check-input" type="checkbox" name="cmt" value="1" id="flexCheck" <?=($cmt=='1'?'checked':'')?> onclick="if (document.getElementById('flexCheck').checked == true) {alert('댓글 포함 검색시 상당 시간이 소요되므로 (30~40초) 입력 후 완료할 때까지 창을 닫지 말고 기다려주세요.')}">
             <label class="form-check-label" for="flexCheck">
                 댓글도 포함하여 검색하기
             </label>
@@ -133,11 +118,11 @@ if ($valid) {
     new Chart(document.getElementById("chart"), {
         type: 'pie',
         data: {
-            labels: [<?="'".join("','", $resultname),"'"?>],
+            labels: [<?="'".join("','", $keyname),"'"?>],
             datasets: [{
                 label: "<?=trim($input)?>",
                 backgroundColor: ['#2196F3','#03A9F4','#00BCD4','#009688','#4CAF50','#8BC34A','#CDDC39','#FFEB3B','#FF9800','#FF5722','#795548','#F44336','#E91E63','#673AB7','#3F51B5','#9C27B0','#9E9E9E','#607D8B'],
-                data: [<?=join(",", $resultvalue)?>]
+                data: [<?=join(",", $keyvalue)?>]
             }]
         },
         options: {
@@ -163,12 +148,12 @@ if ($valid) {
         </thead>
         <tbody>
         <?php
-        for ($i=0; $i<count($resultname); $i++) {
+        for ($i=0; $i<count($keyname); $i++) {
             ?>
             <tr>
                 <th scope="row"><?=$i+1?></th>
-                <td><?=$resultname[$i]."(".$resultname2[$i].")"?></td>
-                <td><?=$resultvalue[$i]?></td>
+                <td><?=$keyname[$i]."(".$keyname2[$i].")"?></td>
+                <td><?=$keyvalue[$i]?></td>
             </tr>
             <?php
         }
@@ -190,3 +175,22 @@ if ($valid) {
   </div>
 </div>
 
+<!-- 로딩 Modal 2 -->
+<div class="modal fade" id="loadMd2" name="loadMd2" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="loadMeLabel">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content">
+        <div class="modal-body text-center">
+            <div class="loader">
+                <img src="../assets/loading.gif" height="100px" width="100px">
+            </div>
+            <div clas="loader-txt">
+            <p>데이터 조회중입니다<br>
+            <span style="color: #DD6372; font-weight: bold;"><small>오래 걸리는 작업이므로 창을 닫지 말아주세요!</small><span></p>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+<script>
+    var loadMd2 = new bootstrap.Modal(document.getElementById('loadMd2'));
+</script>

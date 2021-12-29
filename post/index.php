@@ -2,12 +2,13 @@
     $starttime = microtime(true);
     $nolist = 1; #$_GET['nolist'];
 
-    $conn = mysqli_connect('','','','');
+    $conn= mysqli_connect('', '', '', '');
 
     $cookie_name = 'user';
     $pg = (int)$_GET['page'];
     $recom = $_GET['recom'];
     $month = $_GET['month'];
+    $squery = $_GET['squery'];
     $asc = $_GET['asc'];
     $ascc = $_COOKIE['asc'];
 
@@ -42,12 +43,32 @@
     if ($recom) { $sk .= " AND recommended=1"; }
 
     # 서치쿼리
-    if ($_GET['squery'] != '') {
+    if ($squery != '') {
         $sk .= " AND ";
         
         if ($stype > 0 and $stype < 8) {
 
-            $sqr = mysqli_real_escape_string($conn, $_GET['squery']);
+            // 검색쿼리 추출
+            $sqr = mysqli_real_escape_string($conn, $squery);
+
+            // 명령어 탐색
+            $cmd = explode(" ", $sqr);
+            for ($i=0; $i < count($cmd); $i++) {
+                if (strpos($cmd[$i], "IPID:") !== false) {
+                    $findnick = trim(substr($cmd[$i], strpos($cmd[$i], "IPID:")+5));
+
+                    if ($stype < 5) {
+                        $sk .= "(ipid LIKE '%".trim($findnick)."%') AND ";
+                    } else {
+                        $sk .= "(c_ipid LIKE '%".trim($findnick)."%') AND ";
+                    }
+                    
+                    $sqr = trim(str_replace(substr($cmd[$i], strpos($cmd[$i], "IPID:")), "", $sqr));
+                    $squery = trim(str_replace(substr($cmd[$i], strpos($cmd[$i], "IPID:")), "", $squery));
+                    break;
+                }
+            }
+
             $sq2 = str_replace("%", "\\%", $sqr);
 
             if ($stype == 1) {
@@ -92,11 +113,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="description" content="" />
         <meta name="author" content="" />
+        <meta name="robots" content="noindex"> <!-- 크롤링 방지용 메타태그 -->
         <title><?php echo $postdata['title']." - "."애유갤 박물관 2021"; ?></title>
         <!-- Favicon-->
         <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
         <!-- Core theme CSS (includes Bootstrap)-->
-        <link href="../css/styles.css" rel="stylesheet" />
+        <link href="../css/styles.css?rev=0.1" rel="stylesheet" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js" crossorigin="anonymous"></script>
         <meta name="description" content="애유갤 보존 프로젝트" />
         
@@ -112,30 +134,19 @@
 
         
         <!-- Responsive navbar-->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container">
-                <a class="navbar-brand" href="../"><i class="fas fa-landmark"></i> 애유갤 박물관 <small>2021</small> <span style="font-size: x-small;">v0.2 beta</span></a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll" aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-                </button>
-                    <div class="collapse navbar-collapse" id="navbarScroll">
-                        <ul class="navbar-nav me-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 150px;">
-                        <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="../">메인</a>
-                        </li>
-                        <li class="nav-item">
-                        <a class="nav-link" href="../stat">통계</a>
-                        </li>
-                        <li class="nav-item">
-                        <a class="nav-link" href="#">정보 (준비중)</a>
-                        </li>
-                        </ul>
-                </div>
-            </div>
-        </nav>
+        <?php require('../src/nav.php') ?>
 
         <!-- Page content-->
         <div class="container">
+
+        <?php if ($_GET['delfail']) {
+            ?>
+            <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                <strong>삭제 요청 거부됨</strong></br>아직 원본 글이 삭제되지 않았습니다. 삭제 후 다시 시도해 주세요.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php
+        } ?>
             
             <div class="row">
                 <!-- 글 영역 -->
@@ -144,8 +155,8 @@
                     <div class="shadow-lg p-3 mt-3 mb-3 bg-white backpanel">
                         <div class="form-group shadow rounded p-3 mb-2 bg-light">
                             <h3><?php if ($postdata['recommended']) {echo "<i class=\"fas fa-medal\"></i> "; }
-                            if ($_GET['squery'] != '' and ($_GET['stype'] == 1 or $_GET['stype'] == 2))
-                            { echo str_replace($_GET['squery'],"<mark>".$_GET['squery']."</mark>", $postdata['title']); }
+                            if ($squery != '' and ($_GET['stype'] == 1 or $_GET['stype'] == 2))
+                            { echo str_replace($squery,"<mark>".$squery."</mark>", $postdata['title']); }
                             else { echo $postdata['title']; } ?></h3>
                             <div class="d-flex bd-highlight">
                                 <div class="flex-fill bd-highlight">
@@ -171,10 +182,10 @@
 
                         <div class="shadow rounded">
 
-                            <div class="flex-fill bd-highlight px-3 py-4">
+                            <div class="flex-fill bd-highlight px-3 py-4" style="word-break: break-all;">
                                 <?php 
-                                if ($_GET['squery'] != '' and $_GET['stype'] == 2)
-                                { echo str_replace($_GET['squery'],"<mark>".$_GET['squery']."</mark>",$postdata['postdata']); }
+                                if ($squery != '' and $_GET['stype'] == 2)
+                                { echo str_replace($squery,"<mark>".$squery."</mark>",$postdata['postdata']); }
                                 else { echo $postdata['postdata']; }
                                 ?>
                             </div>
@@ -228,8 +239,8 @@
                                 if ($isreply) {echo "ms-3";}
                                 echo "\" ";
                                 if ($data['cmtid'] == $_GET['cmtid']) { # 선택한 댓글 강조표시
-                                    echo "style='background-color:#FAEFCA;' id='targetpost'";
-                                } elseif ($pd == $data['c_ipid']) { echo "style='background-color:#E2ECF7;'"; }
+                                    echo "style='background-color:#FAEFCA; word-break: break-all;' id='targetpost'";
+                                } elseif ($pd == $data['c_ipid']) { echo "style='background-color:#E2ECF7; word-break: break-all;'"; }
                                 echo ">
                                     <div class=\"p-3\">
                                         <div class=\"d-flex bd-highlight\">
