@@ -1,13 +1,11 @@
 <?php
-# 워드클라우드
-
 $input = trim($_POST['input']);
 ?>
 
-<form class="d-flex justify-content-center" method="POST" action="./?stype=g6">
+<form class="d-flex justify-content-center" method="POST" action="./?stype=k5">
     <div class="input-group mb-3" style="max-width: 600px">
-        <input type="text" class="form-control" placeholder="ID(IP)를 입력하세요" aria-label="id" name="input" aria-describedby="idinput"  value="<?=$input?>">
-        <input class="btn btn-primary" type="submit" id="button-submit" value="입력" onclick="loadMd2.show();">
+        <input type="text" class="form-control" placeholder="분석할 키워드를 입력하세요 (하나만)" aria-label="id" name="input" aria-describedby="idinput"  value="<?=$input?>">
+        <input class="btn btn-primary" type="submit" id="button-submit" data-bs-toggle="modal" data-bs-target="#loadMd" value="입력">
     </div>
 </form>
 
@@ -30,7 +28,7 @@ if (!$valid) {
 
 if ($valid) {
 
-    function wordstrToFreqDict($wordstr) {
+    function wordstrToFreqDict($wordstr, $key) {
         $ws = $wordstr;
 
         $result = array();
@@ -48,7 +46,7 @@ if ($valid) {
         foreach (array_filter(explode(" ", $wordstr)) as $w) {
             if (mb_strlen($w, 'UTF-8') < 2) continue;
             if (in_array($w, $history)) continue;
-            # if (strpos($w, $key) !== false) continue;
+            if (strpos($w, $key) !== false) continue;
 
             array_push($history, $w);
             $count = substr_count($ws, " ".$w." ");
@@ -62,12 +60,10 @@ if ($valid) {
         return array_slice($result, 0, 100);
     }
 
-    $sqlq = "select title from euca_gall_posts_2021 WHERE ipid = '".$key."' AND comments > 0";
+    # $sqlq = "select title from euca_gall_posts_2021 WHERE ipid = '".$key."' AND comments > 0";
 
-    # $sqlq = "select title from euca_gall_posts_2021 WHERE title LIKE '%".$key."%'";
-    
+    $sqlq = "select title from euca_gall_posts_2021 WHERE title LIKE '%".$key."%'";
     $results = mysqli_query($conn, $sqlq);
-    $nicks = array();
     $data = ' ';
 
     while ($result = mysqli_fetch_array($results)) {
@@ -80,21 +76,16 @@ if ($valid) {
         $data = str_replace($c, " ", $data);
     }
 
-    $dict = wordstrToFreqDict($data);
+    $dict = wordstrToFreqDict($data, $key);
 
     if (count($dict) == 0) {
         $valid = false;
         ?>
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>결과 없음</strong></br>DB에 일치하는 결과가 없습니다. 올바른 ID(IP)인지 확인하세요.
+            <strong>결과 없음</strong></br>DB에 일치하는 결과가 없습니다. 올바른 키워드인지 확인하세요.
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         <?php
-    } else {
-        $nickresult = mysqli_query($conn, "SELECT nickname FROM `euca_gall_posts_2021` WHERE ipid = '".$key."' GROUP BY nickname");
-        while ($result = mysqli_fetch_array($nickresult)) {
-            array_push($nicks, $result['nickname']);
-        }
     }
 
 }
@@ -113,7 +104,7 @@ if ($valid) {
 ?>
 
 <div class="fs-4 mt-2 text-secondary text-center">
-    <?=join(',',$nicks)?>님의 워드클라우드
+    "<?=$key?>" 키워드 워드클라우드
 </div>
 <script src="https://cdn.anychart.com/releases/v8/js/anychart-base.min.js"></script>
 <script src="https://cdn.anychart.com/releases/v8/js/anychart-tag-cloud.min.js"></script>
@@ -142,28 +133,8 @@ anychart.onDocumentReady(function() {
     <h6 class="card-subtitle mb-2 text-muted">참고사항</h6>
     <div style="font-size:small; color: gray;">
     본 결과는 글 제목 내용을 기준으로 집계합니다.</br>
-    매 요청마다 실시간으로 집계하기 때문에 글을 많이 썼던 경우 처리가 느려질 수 있습니다.</br>
-    키워드에 마우스를 올리면 언급 빈도(frequency)를 확인할 수 있습니다.</br></div>
+    매 요청마다 실시간으로 집계하기 때문에 언급이 많은 키워드는 처리가 느려질 수 있습니다.</br>
+    검색 키워드가 포함된 결과는 가독성을 위해 제거됩니다.</br>
+    (예: '제니' 검색시 '제니는', '제니가', '제니보고싶다' 제외)</div>
     </div>
 </div>
-
-
-<!-- 로딩 Modal 2 -->
-<div class="modal fade" id="loadMd2" name="loadMd2" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="loadMeLabel">
-    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-        <div class="modal-content">
-        <div class="modal-body text-center">
-            <div class="loader">
-                <img src="../assets/loading.gif" height="100px" width="100px">
-            </div>
-            <div clas="loader-txt">
-            <p>데이터 조회중입니다<br>
-            <span style="color: #DD6372; font-weight: bold;"><small>글 양이 많으면 오래 걸릴 수 있으므로</br>창을 닫지 말아주세요!</small><span></p>
-            </div>
-        </div>
-        </div>
-    </div>
-</div>
-<script>
-    var loadMd2 = new bootstrap.Modal(document.getElementById('loadMd2'));
-</script>

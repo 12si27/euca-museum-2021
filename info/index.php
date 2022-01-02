@@ -11,7 +11,7 @@
         <meta name="robots" content="noindex"> <!-- 크롤링 방지용 메타태그 -->
         <title>애유갤 박물관 2021 v0.2</title>
         <!-- Favicon-->
-        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+        <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="../css/styles.css?rev=0.1" rel="stylesheet" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js" crossorigin="anonymous"></script>
@@ -39,6 +39,26 @@
                 margin-top: 15px;
                 margin-bottom: 15px;
             }
+            
+            /* unvisited link */
+            a:link {
+            color: rgb(78, 78, 78);
+            }
+
+            /* visited link */
+            a:visited {
+            color: rgb(114, 114, 114);
+            }
+
+            /* mouse over link */
+            a:hover {
+            color: rgb(88, 88, 88);
+            }
+
+            /* selected link */
+            a:active {
+            color: rgb(44, 44, 44);
+            }
         </style>
     </head>
     <body>
@@ -47,10 +67,15 @@
 
         <!-- Page content-->
         <div class="container">
-
-        
             <div class="mx-4 my-5">
-                <h1>정보<small> #2021</small></h1>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h1 class="mt-1">정보<small> #2021</small></h1>
+                    </div>
+                    <div class="">
+                        <span class="fs-1"><i class="fas fa-info-circle"></i></span>
+                    </div>
+                </div>
             </div>
         
             <div class="row shadow-lg p-5 mt-2 mb-3 backpanel" style="background-image: url('./assets/info-bg1.jpg'); background-size: cover;">
@@ -68,7 +93,7 @@
                 </div>
             </div>
 
-            <div class="row justify-content-end shadow-lg p-5 mt-2 mb-3 backpanel" style="background-image: url('./assets/info-bg2.jpg'); background-size: cover;">
+            <div class="row justify-content-end shadow-lg p-5 mt-2 mb-4 backpanel" style="background-image: url('./assets/info-bg2.jpg'); background-size: cover;">
                 <div class="col-lg-5">
                     <div class="shadow mt-3 mb-3 bg-white panel">
                         <div class="paneltitle text-end">사용한 솔루션</br>& 프로젝트</div>
@@ -93,6 +118,7 @@
                             </div>
                             <div class="mb-4">
                                 <ul>
+                                    <li>Chart.js</br><a href="https://www.chartjs.org" target="_blank">https://www.chartjs.org</a></li>
                                     <li>Bootstrap 5</br><a href="https://getbootstrap.com/" target="_blank">https://getbootstrap.com/</a></li>
                                     <li>gallreader</br><a href="https://github.com/pdjdev/gallreader" target="_blank">https://github.com/pdjdev/gallreader</a></li>
                                     <li>Spoqa Han Sans</br><a href="https://spoqa.github.io/spoqa-han-sans/" target="_blank">https://spoqa.github.io/spoqa-han-sans/</a></li>
@@ -115,6 +141,8 @@
         </div>
             
         <p class="text-secondary text-center">by 1227</p>
+        <div class="text-end text-secondary text-center" style="font-size: x-small; color:gray;">
+        <p><a href="../../privacy">개인정보처리방침</a></span>   |   <a href="../delreq">일괄 삭제 요청</a></p></div>
     </body>
     <script src="../js/scripts.js?rev=0.4"></script>
 </html>

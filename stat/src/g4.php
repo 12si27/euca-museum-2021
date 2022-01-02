@@ -1,74 +1,80 @@
 <?php
 
+# 글별 랭킹
+
 $input = $_GET['input'];
 $valid = ($input != '');
-$conn = mysqli_connect('', '', '', '');
+require('../src/dbconn.php');
+
+# ==== 작업 시작 ====
+
+$sqlq = '';
+$nicks = array();
+$key = mysqli_real_escape_string($conn, trim($input));
+
+# 순서값이 1~4가 아니면 1로 처리
+if ($_GET['order'] == 1 or $_GET['order'] == 2 or $_GET['order'] == 3 or $_GET['order'] == 4) {
+    $order = $_GET['order'];
+} else {
+    $order = 1;
+}
+
+$limit = 50;
+
+$rank_list = array();
+$id_list = array();
+$title_list = array();
+$uv_list = array();
+$dv_list = array();
+$cmt_list = array();
+$view_list = array();
+
+
+$sqlq = "SELECT postid, title, upvotes, downvotes, comments, views FROM `euca_gall_posts_2021`";
+
+
+if ($valid) {
+    $sqlq .= " WHERE ipid = '$key' ";
+}
+
+
+switch ($order) {
+    case 1: # 개추순
+        $sqlq .= "ORDER BY upvotes DESC";
+        break;
+    
+    case 2: # 비추순
+        $sqlq .= "ORDER BY downvotes DESC";
+        break;
+        
+    case 3: # 댓글순
+        $sqlq .= "ORDER BY comments DESC";
+        break;
+
+    case 4: # 조회수순
+        $sqlq .= "ORDER BY views DESC";
+        break;
+}
+
+$sqlq .= " LIMIT ".$limit;
+
+$results = mysqli_query($conn, $sqlq);
+
+while ($result = mysqli_fetch_array($results)) {
+
+    array_push($id_list, $result['postid']);
+    array_push($title_list, $result['title']);
+    array_push($uv_list, $result['upvotes']);
+    array_push($dv_list, $result['downvotes']);
+    array_push($cmt_list, $result['comments']);
+    array_push($view_list, $result['views']);
+
+}
 
 
 if ($valid) {
 
-    # ==== 작업 시작 ====
-
-    $sqlq = '';
-
-    $upvote_sum = 0;
-    $downvote_sum = 0;
-
-    $upvote_id_arr = array();
-    $upvote_title_arr = array();
-    $upvote_uv_count_arr = array();
-    $upvote_dv_count_arr = array();
-
-    $downvote_id_arr = array();
-    $downvote_title_arr = array();
-    $downvote_uv_count_arr = array();
-    $downvote_dv_count_arr = array();
-
-    $nicks = array();
-
-    $key = mysqli_real_escape_string($conn, trim($input));
-
-
-    # 개추, 비추 합계 불러오기
-    $results = mysqli_query($conn, "SELECT sum(upvotes) AS uv, sum(downvotes) AS dv FROM `euca_gall_posts_2021` WHERE ipid = '$key'");
-
-    while ($result = mysqli_fetch_array($results)) {
-        $upvote_sum = $result['uv'];
-        $downvote_sum = $result['dv'];
-    }
-
-
-    # 개추 탑 25
-    $sqlq = "SELECT postid, title, upvotes, downvotes FROM `euca_gall_posts_2021` WHERE ipid = '$key' ORDER BY upvotes DESC LIMIT 25";
-    
-    $results = mysqli_query($conn, $sqlq);
-
-    while ($result = mysqli_fetch_array($results)) {
-
-        array_push($upvote_id_arr, $result['postid']);
-        array_push($upvote_title_arr, $result['title']);
-        array_push($upvote_uv_count_arr, $result['upvotes']);
-        array_push($upvote_dv_count_arr, $result['downvotes']);
-
-    }
-
-
-    # 비추 탑 25
-    $sqlq = "SELECT postid, title, upvotes, downvotes FROM `euca_gall_posts_2021` WHERE ipid = '$key' ORDER BY downvotes DESC LIMIT 25";
-    
-    $results = mysqli_query($conn, $sqlq);
-
-    while ($result = mysqli_fetch_array($results)) {
-
-        array_push($downvote_id_arr, $result['postid']);
-        array_push($downvote_title_arr, $result['title']);
-        array_push($downvote_uv_count_arr, $result['upvotes']);
-        array_push($downvote_dv_count_arr, $result['downvotes']);
-
-    }
-
-
-    if (count($upvote_id_arr) == 0 and count($downvote_id_arr) == 0 ) {
+    if (count($id_list) == 0) {
         ?>
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <strong>결과 없음</strong></br>DB에 일치하는 결과가 없습니다. 올바른 ID(IP)인지 확인하세요.
@@ -76,111 +82,144 @@ if ($valid) {
         </div>
         <?php
         $valid = false;
-    } else {
-
-        $nickresult = mysqli_query($conn, "SELECT nickname FROM `euca_gall_posts_2021` WHERE ipid = '".$key."' GROUP BY nickname");
-        while ($result = mysqli_fetch_array($nickresult)) {
-            array_push($nicks, $result['nickname']);
-        }
     }
-} else {
 
+    $nickresult = mysqli_query($conn, "SELECT nickname FROM `euca_gall_posts_2021` WHERE ipid = '".$key."' GROUP BY nickname");
+    while ($result = mysqli_fetch_array($nickresult)) {
+        array_push($nicks, $result['nickname']);
+    }
 }
 
 ?>
 
-<form class="d-flex justify-content-center" method="GET">
-    <div class="input-group mb-3" style="max-width: 600px">
-        <input type="text" class="form-control" placeholder="ID(IP)를 입력하세요" aria-label="id" name="input" aria-describedby="idinput" value="<?=$_GET['input']?>">
-        <input hidden name="stype" value="g4">
-        <input class="btn btn-primary" type="submit" id="button-submit" data-bs-toggle="modal" data-bs-target="#loadMd" value="입력">
+<form class="" method="GET">
+    <input hidden name="stype" value="g4">  
+    <div class="d-flex justify-content-center">
+        <div class="col input-group mb-3" style="max-width: 600px">
+            <input type="text" class="form-control" placeholder="ID(IP)를 입력하세요" aria-label="id" name="input" aria-describedby="idinput" value="<?=$_GET['input']?>">
+            <input class="btn btn-primary" type="submit" id="button-submit" data-bs-toggle="modal" data-bs-target="#loadMd" value="입력">
+        </div>
     </div>
+    <input hidden name="order" value="<?=($_GET['order']==''?'1':$_GET['order'])?>">
 </form>
 
-<?php
-if ($valid) {
-    ?>
+
+<form class='' method='GET'>
+    <div class="d-flex justify-content-center">
+        <input hidden name="stype" value="g4">
+        <input hidden name="input" value="<?=$input?>">
+        <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+            <input type="radio" class="btn-check" name="order" id="btnradio1" autocomplete="off" value="1" checked onclick="loadMd.show(); this.form.submit();">
+            <label class="btn btn-outline-primary" for="btnradio1">개추순</label>
+
+            <input type="radio" class="btn-check" name="order" id="btnradio2" autocomplete="off" value="2" <?=($_GET['order']==2?'checked':'')?> onclick="loadMd.show(); this.form.submit();">
+            <label class="btn btn-outline-primary" for="btnradio2">비추순</label>
+
+            <input type="radio" class="btn-check" name="order" id="btnradio3" autocomplete="off" value="3" <?=($_GET['order']==3?'checked':'')?> onclick="loadMd.show(); this.form.submit();">
+            <label class="btn btn-outline-primary" for="btnradio3">댓글순</label>
+
+            <input type="radio" class="btn-check" name="order" id="btnradio4" autocomplete="off" value="4" <?=($_GET['order']==4?'checked':'')?> onclick="loadMd.show(); this.form.submit();">
+            <label class="btn btn-outline-primary" for="btnradio4">조회수순</label>
+        </div>
+    </div>
+</form>
  
-<div class="row">
-    <div class="shadow p-3 mt-3 mb-3 bg-white backpanel">
-        <div class="fs-4 mb-2 text-secondary text-center">
-            <?=join(',',$nicks)?>님의 개추·비추수 비율
-        </div>
-        <script src="./chartjs/chart.min.js"></script>
-        <div>
-            <canvas id="pie-chart" style="max-height: 500px;"></canvas>
-            <script>
-            new Chart(document.getElementById("pie-chart"), {
-                type: 'pie',
-                data: {
-                    labels: ['개추수','비추수'],
-                    datasets: [{
-                        backgroundColor: ['#2196F3','#F44336'],
-                        data: [<?=$upvote_sum?>,<?=$downvote_sum?>]
-                    }]
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="shadow p-3 mt-3 mb-3 bg-white backpanel">
+            <div class="fs-4 mb-2 text-secondary text-center">
+                <?php
+
+                
+
+                if (count($nicks)>0) {
+                    echo join(', ', $nicks)."님의 ";
+                } else {
+                    echo "전체 ";
                 }
-            });
-            </script>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="shadow p-3 mt-3 mb-3 bg-white backpanel">
-            <div class="fs-4 mb-2 text-secondary text-center">
-                개추 글 랭킹 TOP <?=count($upvote_title_arr)?>
+                
+
+                switch ($order) {
+                    case 1: # 개추순
+                        echo '개추 글 랭킹';
+                        break;
+                    
+                    case 2: # 비추순
+                        echo '비추 글 랭킹';
+                        # code...
+                        break;
+                        
+                    case 3: # 댓글순
+                        echo '최다 댓글 랭킹';
+                        # code...
+                        break;
+
+                    case 4: # 조회수순
+                        echo '최다 조회수 랭킹';
+                        # code...
+                        break;
+                }
+
+                ?> TOP <?=count($id_list)?>
             </div>
 
             <div class="d-flex justify-content-center my-3">
-                <table class="table" style="max-width: 600px;">
+                <table class="table table-hover mx-2">
                     <thead>
                         <tr>
                         <th scope="col">순위</th>
                         <th scope="col">제목</th>
-                        <th scope="col">개추수</th>
+                        <th scope="col"><?php
+                        switch ($order) {
+                            case 1: # 개추순
+                                echo '개추수'; break;                            
+                            case 2: # 비추순
+                                echo '비추수'; break;                                
+                            case 3: # 댓글순
+                                echo '댓글수'; break;
+                            case 4: # 조회수순
+                                echo '조회수';  break;
+                        }
+                        ?></th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php
-                    for ($i=0; $i<count($upvote_id_arr); $i++) {
+                    $j = 1;
+                    $prevrank = -1;
+                    $currval = -1;
+                    $prevval = -1;
+
+                    for ($i=0; $i<count($id_list); $i++) {
+
+                        switch ($order) {
+                            case 1: # 개추순
+                                $currval = $uv_list[$i]; break;                            
+                            case 2: # 비추순
+                                $currval = $dv_list[$i]; break;                                
+                            case 3: # 댓글순
+                                $currval = $cmt_list[$i]; break;
+                            case 4: # 조회수순
+                                $currval = $view_list[$i]; break;
+                        }
+
                         ?>
-                        <tr>
-                            <th scope="row"><?=$i+1?></th>
-                            <td><?=$upvote_title_arr[$i]?></td>
-                            <td><?=$upvote_uv_count_arr[$i]?></td>
-                        </tr>
-                        <?php
-                    }
+                        <tr onclick="window.open('../post?id=<?=$id_list[$i]?>');">
+                            <th scope="row"><?php
 
-                    ?> 
-                    </tbody>
-                </table>
-            </div>
+                            if ($currval == $prevval) {
+                                echo $prevrank;
+                            } else {
+                                echo $j;
+                                $prevrank = $j;
+                            }
 
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <div class="shadow p-3 mt-3 mb-3 bg-white backpanel">
-            <div class="fs-4 mb-2 text-secondary text-center">
-                비추 글 랭킹 <?=count($downvote_title_arr)?>
-            </div>
-
-            <div class="d-flex justify-content-center my-3">
-                <table class="table" style="max-width: 600px;">
-                    <thead>
-                        <tr>
-                        <th scope="col">순위</th>
-                        <th scope="col">제목</th>
-                        <th scope="col">비추수</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php
-                    for ($i=0; $i<count($downvote_id_arr); $i++) {
-                        ?>
-                        <tr>
-                            <th scope="row"><?=$i+1?></th>
-                            <td><?=$downvote_title_arr[$i]?></td>
-                            <td><?=$downvote_dv_count_arr[$i]?></td>
+                            $prevval = $currval;
+                            $j++;
+                            
+                            ?></th>
+                            <td><?=$title_list[$i]?></td>
+                            <td><?=$currval?></td>
                         </tr>
                         <?php
                     }
@@ -193,14 +232,16 @@ if ($valid) {
     </div>
 </div>
 
-<?php } ?>
 
 <div class="card">
   <div class="card-body">
   <h6 class="card-subtitle mb-2 text-muted">참고사항</h6>
   <div style="font-size:small; color: gray;">
-  본 결과는 글 제목<?=($cmt=='1'?'과 댓글':'')?> 내용을 기준으로 집계합니다</br>
-  하나의 글, 댓글에서 한번 이상 언급된 것은 한번 언급된 것으로 취급합니다</br>
-  문맥과는 맞지 않는 언급도 포함되기 때문에 뜻이 많이 겹치는 단어의 경우 실제보다 더 많이 집계될 수 있습니다.</div>
+  최대 50개까지의 항목을 출력합니다</br>
+  글이 삭제 요청으로 인해 삭제 처리가 된 경우, 해당 글과 해당 글에 달린 댓글 전체가 집계에서 제외됩니다.</div>
   </div>
 </div>
+
+<script>
+    var loadMd = new bootstrap.Modal(document.getElementById('loadMd'));
+</script>

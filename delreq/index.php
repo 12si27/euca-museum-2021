@@ -44,7 +44,9 @@
                                     <h5 class="text-secondary">일괄 삭제 요청은...</h5>
                                     일괄 삭제 요청은 애유갤 박물관에서 자신의 모든 글, 댓글의 전시를 원치 않을 경우</br>전체를 한방에 삭제할 수 있는 기능입니다.</br></br>
                                     글과 댓글의 게시자임을 증명해야 하기 때문에 갤로그 방명록을 통한</br>인증 절차를 거쳐 삭제를 진행하게 됩니다.</br>
-                                    (즉, 유동이 아닌 가입 회원만 일괄 삭제 기능을 사용하실 수 있습니다)
+                                    (즉, 유동이 아닌 가입 회원만 일괄 삭제 기능을 사용하실 수 있습니다)</br></br>
+                                    <span style="color: #DD6372; font-size: 8pt; font-weight:bold;">글의 양이 많거나 많은 사용자가 붐빌 경우 삭제가 실패할 수도 있습니다.</br>
+                                    삭제 요청에 문제가 있는 경우 <a href="https://gallog.dcinside.com/12si27boon/guestbook" target="_blank">운영자 갤로그에 글을 남겨주시면</a> 삭제해 드리도록 하겠습니다</span>
                                     <div class="d-flex flex-row-reverse">
                                         <img src="dbmo.png" width="150px">
                                     </div>

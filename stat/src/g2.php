@@ -4,12 +4,36 @@
 
 $input = $_GET['input'];
 $valid = ($input != '');
-$conn = mysqli_connect('', '', '', '');
+require('../src/dbconn.php');
 
 $keyname = array();
 $keyvalue = array();
 $keyvalue2 = array();
 $keyvalue3 = array();
+
+
+# 1=월별, 2=시간별, 3=요일별
+# 순서값이 1~3이 아니면 1로 처리
+if ($_GET['gtype'] == 1 or $_GET['gtype'] == 2 or $_GET['gtype'] == 3) {
+    $gtype = $_GET['gtype'];
+} else {
+    $gtype = 1;
+}
+
+switch ($gtype) {
+    case 1:
+        $gname = "년-월";
+        $df = '%Y-%m';
+        break;
+    case 2:
+        $gname = "시간(24시)";
+        $df = '%H';
+        break;
+    case 3:
+        $gname = "요일";
+        $df = '%a';
+        break;
+}
 
 $nicks = array();
 
@@ -22,7 +46,7 @@ if ($valid) {
             FROM
                 (
                 SELECT
-                    DATE_FORMAT(DATE, '%Y-%m') AS m,
+                    DATE_FORMAT(DATE, '$df') AS m,
                     COUNT(*) AS posts
                 FROM
                     euca_gall_posts_2021
@@ -34,7 +58,7 @@ if ($valid) {
             LEFT JOIN
                 (
                 SELECT
-                    DATE_FORMAT(c_date, '%Y-%m') AS m2,
+                    DATE_FORMAT(c_date, '$df') AS m2,
                     COUNT(*) AS cmts
                 FROM
                     euca_gall_cmts_2021
@@ -51,7 +75,7 @@ if ($valid) {
             FROM
                 (
                 SELECT
-                    DATE_FORMAT(DATE, '%Y-%m') AS m,
+                    DATE_FORMAT(DATE, '$df') AS m,
                     COUNT(*) AS posts
                 FROM
                     euca_gall_posts_2021
@@ -63,7 +87,7 @@ if ($valid) {
             RIGHT JOIN
                 (
                 SELECT
-                    DATE_FORMAT(c_date, '%Y-%m') AS m2,
+                    DATE_FORMAT(c_date, '$df') AS m2,
                     COUNT(*) AS cmts
                 FROM
                     euca_gall_cmts_2021
@@ -87,7 +111,7 @@ if ($valid) {
             FROM
                 (
                 SELECT
-                    DATE_FORMAT(DATE, '%Y-%m') AS m,
+                    DATE_FORMAT(DATE, '$df') AS m,
                     COUNT(*) AS posts
                 FROM
                     euca_gall_posts_2021
@@ -97,22 +121,54 @@ if ($valid) {
             NATURAL JOIN
                 (
                 SELECT
-                    DATE_FORMAT(c_date, '%Y-%m') AS m,
+                    DATE_FORMAT(c_date, '$df') AS m,
                     COUNT(*) AS cmts
                 FROM
                     euca_gall_cmts_2021
                 GROUP BY
                     m
             ) b";
+}
 
-    
-    array_push($nicks, '전체');
+if ($gtype == 3) {
+    $sqlq .= " ORDER BY CASE
+                WHEN m = 'Mon' THEN 1
+                WHEN m = 'Tue' THEN 2
+                WHEN m = 'Wed' THEN 3
+                WHEN m = 'Thu' THEN 4
+                WHEN m = 'Fri' THEN 5
+                WHEN m = 'Sat' THEN 6
+                WHEN m = 'Sun' THEN 7
+            END ASC";
 }
 
 $results = mysqli_query($conn, $sqlq);
 
 while ($result = mysqli_fetch_array($results)) {
-    array_push($keyname, $result['m']);
+
+    if ($gtype == 3) {
+        switch ($result['m']) {
+            case 'Mon':
+                $kn = '월요일'; break;
+            case 'Tue':
+                $kn = '화요일'; break;
+            case 'Wed':
+                $kn = '수요일'; break;
+            case 'Thu':
+                $kn = '목요일'; break;
+            case 'Fri':
+                $kn = '금요일'; break;
+            case 'Sat':
+                $kn = '토요일'; break;
+            case 'Sun':
+                $kn = '일요일'; break;
+        }
+    } else {
+        $kn = $result['m'];
+    }
+
+    array_push($keyname, $kn);
+
     $p = intval($result['posts']);
     $c = intval($result['cmts']);
 
@@ -140,10 +196,52 @@ if (count($keyname) == 0) {
         <input hidden name="stype" value="g2">
         <input class="btn btn-primary" type="submit" id="button-submit" data-bs-toggle="modal" data-bs-target="#loadMd" value="입력">
     </div>
+    <input hidden name="gtype" value="<?=($_GET['gtype']==''?'1':$_GET['gtype'])?>">
+</form>
+
+<form class='' method='GET'>
+    <div class="d-flex justify-content-center">
+        <input hidden name="stype" value="g2">
+        <input hidden name="input" value="<?=$input?>">
+        <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+            <input type="radio" class="btn-check" name="gtype" id="btnradio1" autocomplete="off" value="1" checked onclick="loadMd.show(); this.form.submit();">
+            <label class="btn btn-outline-primary" for="btnradio1">월별</label>
+
+            <input type="radio" class="btn-check" name="gtype" id="btnradio2" autocomplete="off" value="2" <?=($_GET['gtype']==2?'checked':'')?> onclick="loadMd.show(); this.form.submit();">
+            <label class="btn btn-outline-primary" for="btnradio2">시간별</label>
+
+            <input type="radio" class="btn-check" name="gtype" id="btnradio3" autocomplete="off" value="3" <?=($_GET['gtype']==3?'checked':'')?> onclick="loadMd.show(); this.form.submit();">
+            <label class="btn btn-outline-primary" for="btnradio3">요일별</label>
+        </div>
+    </div>
 </form>
 
 <script src="./chartjs/chart.min.js"></script>
 <div>
+    <div class="fs-4 m-2 text-secondary text-center">
+        <?php
+        switch ($gtype) {
+            case 1:
+                echo '월';
+                break;
+            case 2:
+                echo '시간';
+                break;
+            case 3:
+                echo '요일';
+                break;
+        }
+        echo '별 ';
+
+        if (count($nicks) > 0) {
+            echo join(', ', $nicks)."님의";
+        } else {
+            echo '전체';
+        }
+
+        echo ' 활동 횟수';
+        ?>
+    </div>
     <canvas id="chart" style="max-height: 500px;"></canvas>
     <script>
     new Chart(document.getElementById("chart"), {
@@ -168,12 +266,6 @@ if (count($keyname) == 0) {
             }]
         },
         options: {
-            plugins: {
-                title: {
-                    display: true,
-                    text: '월별 <?=join(",", $nicks)?>님의 활동 횟수'
-                }
-            },
             scales: {
                 y: {
                     beginAtZero: true
@@ -189,7 +281,7 @@ if (count($keyname) == 0) {
         <thead>
             <tr>
             <th scope="col">#</th>
-            <th scope="col">년-월</th>
+            <th scope="col"><?=$gname?></th>
             <th scope="col">글쓴수</th>
             <th scope="col">댓글쓴수</th>
             <th scope="col">총합</th>
@@ -198,6 +290,9 @@ if (count($keyname) == 0) {
         <tbody>
         <?php
         for ($i=0; $i<count($keyname); $i++) {
+
+            
+
             ?>
             <tr>
                 <th scope="row"><?=$i+1?></th>
@@ -222,8 +317,6 @@ if (count($keyname) == 0) {
     </div>
 </div>
 
-<?php
-
-echo '';
-
-?>
+<script>
+    var loadMd = new bootstrap.Modal(document.getElementById('loadMd'));
+</script>

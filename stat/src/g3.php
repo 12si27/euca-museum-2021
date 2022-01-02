@@ -4,7 +4,7 @@
 
 $input = $_GET['input'];
 $valid = ($input != '');
-$conn = mysqli_connect('', '', '', '');
+require('../src/dbconn.php');
 
 $dccons = array();
 $counts = array();

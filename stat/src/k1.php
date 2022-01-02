@@ -2,7 +2,7 @@
 
 $input = $_GET['input'];
 $valid = ($input != '');
-$conn = mysqli_connect('', '', '', '');
+require('../src/dbconn.php');
 
 if ($valid) {
 

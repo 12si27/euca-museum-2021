@@ -1,17 +1,21 @@
 <?php
 
+# 갤럼간 댓글 랭킹
+
 $input = $_GET['input'];
 $valid = ($input != '');
-$conn = mysqli_connect('', '', '', '');
+require('../src/dbconn.php');
 
 
 $res1_name = array();
 $res1_no = array();
 $res1_val = array();
+$res1_rank = array();
 
 $res2_name = array();
 $res2_no = array();
 $res2_val = array();
+$res2_rank = array();
 
 if ($valid) {
     
@@ -19,7 +23,7 @@ if ($valid) {
 
     // 나 -> 타갤럼
     $sqlq1 = "SELECT
-                ipid, GROUP_CONCAT(DISTINCT nickname) AS nick,
+                ipid, GROUP_CONCAT(DISTINCT nickname) AS nick, hasaccount,
                 count(*) AS total
             FROM
                 `euca_gall_posts_2021`
@@ -35,15 +39,27 @@ if ($valid) {
 
     $results = mysqli_query($conn, $sqlq1);
 
+    $i = 1; $prevrank = -1; $prevval = -1;
+
     while ($result = mysqli_fetch_array($results)) {
-        array_push($res1_name, $result['nick']." (".$result['ipid'].")");
+        array_push($res1_name, $result['nick']." (".($result['hasaccount']?substr($result['ipid'],0,4).'****':$result['ipid']).")");
         array_push($res1_no, $result['nick']);
         array_push($res1_val, $result['total']);
+
+        if ($result['total'] == $prevval) {
+            array_push($res1_rank, $prevrank);
+        } else {
+            array_push($res1_rank, $i);
+            $prevrank = $i;
+        }
+
+        $prevval = $result['total'];
+        $i++;
     }
 
     // 타갤럼 -> 나
     $sqlq2 = "SELECT
-                c_ipid, GROUP_CONCAT(DISTINCT c_nickname) AS c_nick,
+                c_ipid, GROUP_CONCAT(DISTINCT c_nickname) AS c_nick, c_hasaccount,
                 count(*) AS total
             FROM
                 `euca_gall_posts_2021`
@@ -59,11 +75,32 @@ if ($valid) {
 
     $results = mysqli_query($conn, $sqlq2);
 
+    /*
     while ($result = mysqli_fetch_array($results)) {
         array_push($res2_name, $result['c_nick']." (".$result['c_ipid'].")");
         array_push($res2_no, $result['c_nick']);
         array_push($res2_val, $result['total']);
     }
+    */
+
+    $i = 1; $prevrank = -1; $prevval = -1;
+
+    while ($result = mysqli_fetch_array($results)) {
+        array_push($res2_name, $result['c_nick']." (".($result['c_hasaccount']?substr($result['c_ipid'],0,4).'****':$result['c_ipid']).")");
+        array_push($res2_no, $result['c_nick']);
+        array_push($res2_val, $result['total']);
+
+        if ($result['total'] == $prevval) {
+            array_push($res2_rank, $prevrank);
+        } else {
+            array_push($res2_rank, $i);
+            $prevrank = $i;
+        }
+
+        $prevval = $result['total'];
+        $i++;
+    }
+
 
     $nickresult = mysqli_query($conn, "SELECT nickname FROM `euca_gall_posts_2021` WHERE ipid = '".$key."' GROUP BY nickname");
     while ($result = mysqli_fetch_array($nickresult)) {
@@ -151,7 +188,7 @@ if ($valid) {
                     for ($i=0; $i<count($res1_name); $i++) {
                         ?>
                         <tr>
-                            <th scope="row"><?=$i+1?></th>
+                            <th scope="row"><?=$res1_rank[$i]?></th>
                             <td><?=$res1_name[$i]?></td>
                             <td><?=number_format($res1_val[$i])?></td>
                         </tr>
@@ -210,7 +247,7 @@ if ($valid) {
                     for ($i=0; $i<count($res2_name); $i++) {
                         ?>
                         <tr>
-                            <th scope="row"><?=$i+1?></th>
+                            <th scope="row"><?=$res2_rank[$i]?></th>
                             <td><?=$res2_name[$i]?></td>
                             <td><?=number_format($res2_val[$i])?></td>
                         </tr>

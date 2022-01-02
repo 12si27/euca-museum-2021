@@ -83,7 +83,7 @@ if ($id == '') {
                                     
                                     <div class="card-footer d-flex flex-row-reverse">
                                         <input type="submit" class="btn btn-secondary ms-2" value="다음">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="location.href='./auth';">뒤로</button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="location.href='../auth';">뒤로</button>
                                     </div>
                                 </div>
                             </form>

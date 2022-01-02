@@ -2,7 +2,7 @@
 $id = $_POST['id'];
 $code = $_POST['code'];
 
-$conn = mysqli_connect('', '', '', '');
+require('../../src/dbconn.php');
 
 $id = mysqli_escape_string($conn, $id);
 $code = mysqli_escape_string($conn, $code);
@@ -26,7 +26,7 @@ if ($valid) {
     $err_occured = false;
 
     # 댓글 지우기
-    $sql="DELETE FROM euca_gall_cmts_2021 WHERE c_ipid = '$id')";
+    $sql="DELETE FROM euca_gall_cmts_2021 WHERE c_ipid = '$id'";
     $del=mysqli_query($conn,$sql);
 
     # 글 크기 파악

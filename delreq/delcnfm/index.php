@@ -8,7 +8,7 @@ if ($id == '' or $code == '') {
 } else {
     
 
-    $conn = mysqli_connect('', '', '', '');
+    require('../../src/dbconn.php');
 
     $id = mysqli_escape_string($conn, $id);
     $nicks = array();

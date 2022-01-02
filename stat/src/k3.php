@@ -3,22 +3,15 @@
 $input = $_GET['input'];
 $cmt = $_GET['cmt'];
 $valid = ($input != '');
-$conn = mysqli_connect('', '', '', '');
+require('../src/dbconn.php');
 
 if ($valid) {
 
     $sqlq = '';
 
-    $postname = array();
-    $postname2 = array();
-    $postvalue = array();
-
-    $cmtname = array();
-    $cmtname2 = array();
-    $cmtvalue = array();
-
     $resultname = array();
     $resultname2 = array();
+    $resulthacc = array();
     $resultvalue = array();
 
     $key = mysqli_real_escape_string($conn, trim($input));
@@ -29,6 +22,7 @@ if ($valid) {
     $sqlq = "SELECT
                 nickname as n,
                 ipid as i,
+                hasaccount as h,
                 COUNT(*) AS c
             FROM
                 euca_gall_posts_2021
@@ -47,6 +41,7 @@ if ($valid) {
     while ($result = mysqli_fetch_array($results)) {
         array_push($resultname, $result['n']);
         array_push($resultname2, $result['i']);
+        array_push($resulthacc, $result['h']);
         array_push($resultvalue, $result['c']);
     }
 
@@ -57,6 +52,7 @@ if ($valid) {
         $sqlq = "SELECT
                     c_nickname as n,
                     c_ipid as i,
+                    c_hasaccount as h,
                     COUNT(*) AS c
                 FROM
                     euca_gall_cmts_2021
@@ -77,13 +73,14 @@ if ($valid) {
             if (array_search($result['i'], $resultname2) === false) {
                 array_push($resultname, $result['n']);
                 array_push($resultname2, $result['i']);
+                array_push($resulthacc, $result['h']);
                 array_push($resultvalue, $result['c']);
             } else {
                 $resultvalue[array_search($result['i'], $resultname2)] += $result['c'];
             }
         }
 
-        array_multisort($resultvalue, SORT_DESC, $resultname, $resultname2);
+        array_multisort($resultvalue, SORT_DESC, $resultname, $resultname2, $resulthacc);
 
     }
 
@@ -99,6 +96,7 @@ if ($valid) {
 
     array_slice($resultname, 0, 15);
     array_slice($resultname2, 0, 15);
+    array_slice($resulthacc, 0, 15);
     array_slice($resultvalue, 0, 15);
 
 }
@@ -167,7 +165,7 @@ if ($valid) {
             ?>
             <tr>
                 <th scope="row"><?=$i+1?></th>
-                <td><?=$resultname[$i]."(".$resultname2[$i].")"?></td>
+                <td><?=$resultname[$i]."(".($resulthacc[$i]?substr($resultname2[$i],0,4).'****':$resultname2[$i]).")"?></td>
                 <td><?=$resultvalue[$i]?></td>
             </tr>
             <?php

@@ -2,7 +2,7 @@
     $starttime = microtime(true);
     $nolist = 1; #$_GET['nolist'];
 
-    $conn= mysqli_connect('', '', '', '');
+    require('../src/dbconn.php');
 
     $cookie_name = 'user';
     $pg = (int)$_GET['page'];
@@ -165,17 +165,26 @@
                                     <span class="badge rounded-pill bg-secondary">개추 <?=$postdata['upvotes']?></span>
                                     <span class="badge rounded-pill bg-secondary">비추 <?=$postdata['downvotes']?></span>
                                 </div>
-                                <div class="flex bd-highlight justify-content-end">
+                                <div class="flex bd-highlight justify-content-end text-end">
+                                    <div>
                                     <?php
+                                        if ($postdata['hasaccount']) {
+                                            echo "<img class='mx-1' src='../assets/gonic.gif'>";
+                                        }
                                         if ($hidenick) {
                                             $annick = explode(' #', eucahash($postdata['ipid']));
-                                            ?><div><?=$annick[0]?>
-                                            <span class="badge rounded-pill bg-secondary"><?="#".$annick[1]?></span></div><?php
+                                            echo $annick[0];
+                                            ?> <span class="badge rounded-pill bg-secondary"><?="#".$annick[1]?></span></div><?php
                                         } else {
-                                            ?><div><?=$postdata['nickname']?>
-                                            <span class="badge rounded-pill bg-secondary"><?=$postdata['ipid']?></span></div><?php
+                                            echo $postdata['nickname'];
+                                            ?> <span class="badge rounded-pill bg-secondary"><?php
+                                            if ($postdata['hasaccount']) {
+                                                echo substr($postdata['ipid'],0,4)."****";
+                                            } else {
+                                                echo $postdata['ipid'];
+                                            }
                                         }
-                                    ?>
+                                        ?></span></div>
                                 </div>
                             </div>
                         </div>
@@ -249,6 +258,7 @@
                                 
                                 if ($hidenick) { $annick = explode(' #', eucahash($data['c_ipid'])); }
 
+                                if ($data['c_hasaccount']) { echo "<img class='mx-1' src='../assets/gonic.gif'>"; }
                                 if ($hidenick) {
                                     echo $annick[0];
                                 } else {
@@ -260,7 +270,11 @@
                                 if ($hidenick) {
                                     echo "#".$annick[1];
                                 } else {
-                                    echo $data['c_ipid'];
+                                    if ($data['c_hasaccount']) {
+                                        echo substr($data['c_ipid'],0,4).'****';
+                                    } else {
+                                        echo $data['c_ipid'];
+                                    }
                                 }
 
                                 echo "</span></div>
@@ -411,7 +425,7 @@
             $postloadtime = microtime(true) - $starttime;?>
             
         <div class="text-end text-secondary text-center mt-3" style="font-size: x-small;">
-            <p>저장 DB: 2021.01.01~2021.10.31*</br>
+            <p>저장 DB: 2021.01.01~2021.12.31*</br>
             
             <?php
                 echo "글 로드 시간:".round($postloadtime, 4)."</p>";

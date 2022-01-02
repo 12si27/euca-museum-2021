@@ -7,7 +7,7 @@ if($postid != '' and is_numeric($postid)) {
     if (strpos($result, '<state>DELETED</state>') !== false) {
         
         // DB에서 삭제하기 시작
-        $conn = mysqli_connect('', '', '', '');
+        require('../src/dbconn.php');
 
         $postipid = '';     # 작성자 IDIP
         $ipids = array();   # 댓글단사람 IDIP

@@ -28,8 +28,15 @@
         <!-- Page content-->
         <div class="container">
             <div class="mt-5 mx-4">
-                <h1>통계<small> #2021</small></h1>
-                <div class="lead mb-5">지난 2021년 애유갤의 데이터를 분석하여 통계로 되돌아보세요</div>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h1>통계<small> #2021</small></h1>
+                        <div class="fs-6 text-secondary mb-5">지난 2021년 애유갤의 데이터를 분석하여 통계로 되돌아보세요</div>
+                    </div>
+                    <div class="mt-2 ms-3">
+                        <span class="fs-1"><i class="fas fa-chart-bar"></i></span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -37,7 +44,7 @@
 
                 <div class="d-flex flex-wrap bd-highlight mb-3">
                     <div class="m-2">
-                        <div class="fs-5 text-secondary mb-2">키워드 분석</div>
+                        <div class="fs-5 text-secondary mb-2"><i class="fas fa-comment-dots"></i> 키워드 분석</div>
                         <ul class="nav nav-pills">
                             <li class="nav-item">
                                 <a class="nav-link <?=($type=='k1'?'active':'')?>" href="./?stype=k1" >언급 비율</a>
@@ -46,32 +53,38 @@
                                 <a class="nav-link <?=($type=='k2'?'active':'')?>" href="./?stype=k2">월별 언급 빈도</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link <?=($type=='k3'?'active':'')?>" href="./?stype=k3">최다 언급 회원</a>
+                                <a class="nav-link <?=($type=='k3'?'active':'')?>" href="./?stype=k3">최다 언급 갤럼</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link <?=($type=='k4'?'active':'')?>" href="./?stype=k4">워드클라우드</a>
+                                <a class="nav-link <?=($type=='k4'?'active':'')?>" href="./?stype=k4">개추:비추</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?=($type=='k5'?'active':'')?>" href="./?stype=k5">워드클라우드</a>
                             </li>
                         </ul>
                     </div>
 
                     <div class="m-2">
-                        <div class="fs-5 text-secondary mb-2">갤러 분석</div>
+                        <div class="fs-5 text-secondary mb-2"><i class="fas fa-user"></i> 갤러 분석</div>
                         <ul class="nav nav-pills">
                             <li class="nav-item">
-                                <a class="nav-link <?=($type=='g1'?'active':'')?>" href="./?stype=g1">요약</a>
+                                <a class="nav-link <?=($type=='g0'?'active':'')?>" href="./?stype=g0" onclick="loadMd.show();">전체</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link <?=($type=='g2'?'active':'')?>" href="./?stype=g2" onclick="loadMd.show();">월별 활동</a>
+                                <a class="nav-link <?=($type=='g1'?'active':'')?>" href="./?stype=g1">개인</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?=($type=='g2'?'active':'')?>" href="./?stype=g2" onclick="loadMd.show();">활동 횟수</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link <?=($type=='g3'?'active':'')?>" href="./?stype=g3" onclick="loadMd.show();">디시콘 랭킹</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link <?=($type=='g4'?'active':'')?>" href="./?stype=g4">개추/비추 랭킹</a>
+                                <a class="nav-link <?=($type=='g4'?'active':'')?>" href="./?stype=g4" onclick="loadMd.show();">글별 랭킹</a>
                             </li>
-                            <li class="nav-item">
+                            <?php /*<li class="nav-item">
                                 <a class="nav-link <?=($type=='g5'?'active':'')?>" href="./?stype=g5">갤럼간 댓글 랭킹</a>
-                            </li>
+                            </li> */?>
                             <li class="nav-item">
                                 <a class="nav-link <?=($type=='g6'?'active':'')?>" href="./?stype=g6">워드클라우드</a>
                             </li>
@@ -79,7 +92,7 @@
                     </div>
                 </div>
                     
-                <div class="container shadow-lg p-3 mt-2 mb-5 bg-white backpanel ">
+                <div class="container shadow-lg p-3 mt-2 mb-5 bg-white backpanel" id="statres">
                     <?php
                     switch ($type) {
                         case 'k1':
@@ -98,6 +111,14 @@
                             require("./src/k4.php");
                             break;
 
+                        case 'k5':
+                            require("./src/k5.php");
+                            break;
+
+                        case 'g0':
+                            require("./src/g0.php");
+                            break;
+
                         case 'g1':
                             require("./src/g1.php");
                             break;
@@ -113,10 +134,10 @@
                         case 'g4':
                             require("./src/g4.php");
                             break;
-
+                        /*        
                         case 'g5':
                             require("./src/g5.php");
-                            break;
+                            break; */
 
                         case 'g6':
                             require("./src/g6.php");
@@ -137,9 +158,8 @@
             </div>
 
 
-        <div class="text-end text-secondary text-center" style="font-size: x-small; font-color:gray;">
-        <p>저장 DB: 2021.01.01~2021.11.31</p>
-        <p>트래픽 최소화를 위해 본문 콘텐츠는 링크되어 있으므로<br>PC 환경에서는 제대로 표시되지 않을 수 있습니다.</p></div>
+        <div class="text-end text-secondary text-center" style="font-size: x-small;">
+        <p>저장 DB: 2021.01.01~2021.12.31</p></div>
         <p class="text-secondary text-center">by 1227</p>
 
         <!-- 로딩 Modal -->

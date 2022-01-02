@@ -1,6 +1,6 @@
 <?php
     $mode = 'main';
-    $conn = mysqli_connect('', '', '', '');
+    require('./src/dbconn.php');
 
     $cookie_name = 'user';
     $pg = (int)$_GET['page'];
@@ -184,8 +184,15 @@
 
         
             <div class="mt-5 mx-4">
-                <h1>애유갤 박물관<small> #2021</small></h1>
-                <div class="lead mb-5">귀중한 2021년 애유갤의 역대 글 자료를 자유롭게 열람하세요</div>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h1>애유갤 박물관<small> #2021</small></h1>
+                        <div class="fs-6 text-secondary mb-5">귀중한 2021년 애유갤의 역대 글 자료를 자유롭게 열람하세요</div>
+                    </div>
+                    <div class="mt-2 ms-3">
+                        <span class="fs-1"><i class="fas fa-landmark"></i></span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -498,7 +505,7 @@
                 
             </div>
         <div class="text-end text-secondary text-center" style="font-size: x-small; font-color:gray;">
-        <p>저장 DB: 2021.01.01~2021.11.31<br><?php echo "총 ".number_format($totalposts)."개의 글 검색됨" ?></p>
+        <p>저장 DB: 2021.01.01~2021.12.31<br><?php echo "총 ".number_format($totalposts)."개의 글 검색됨" ?></p>
         <p>트래픽 최소화를 위해 본문 콘텐츠는 링크되어 있으므로<br>PC 환경에서는 제대로 표시되지 않을 수 있습니다.</p></div>
         <p class="text-secondary text-center">by 1227</p>
     </body>

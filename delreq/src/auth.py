@@ -25,6 +25,7 @@ try:
         'ssl':'Y'
     }
 
+    # target_id = '12si27boon'
     target_id = sys.argv[1]
 
     time.sleep(2)
@@ -84,7 +85,7 @@ try:
             passwd='', 
             host='', 
             db='', 
-            charset=''
+            charset='utf8'
         )
 
         cursor = conn.cursor(pymysql.cursors.DictCursor)

@@ -8,7 +8,7 @@ if (ctype_alnum($id) == false) {
 
 } elseif($id != '') {
 
-    $conn = mysqli_connect('', '', '', '');
+    require('../../src/dbconn.php');
 
     $id = strtolower($id);
     $id = mysqli_escape_string($conn, $id);

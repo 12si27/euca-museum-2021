@@ -3,7 +3,7 @@
 $id = $_POST['id'];
 $code = $_POST['code'];
 
-$conn = mysqli_connect('', '', '', '');
+require('../../src/dbconn.php');
 
 $id = mysqli_escape_string($conn, $id);
 $code = strtoupper(mysqli_escape_string($conn, $code));

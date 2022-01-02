@@ -1,5 +1,6 @@
 # 1227 Experimental Server
 
 User-agent: *
-Disallow: /euca/
-
+Disallow: /post/
+Disallow: /stat/
+Disallow: /delreq/
